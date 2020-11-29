@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
     <!-- JS -->
-    
+
     <script src="./scripts/utilitary.js"></script>
     <script src="./scripts/timer.js"></script>
     <script src="./scripts/bonus.js"></script>
@@ -29,21 +29,20 @@
     <h1 class="display-1 text-center mb-5">Sex Pick</h1>
     <!-- Pick zone -->
     <aside id="buttons" class="text-center">
-        <button id="preliminary" type="button" class="btn btn-dark btn-lg mx-5" onclick="preliminary()">Préliminaires
-            classiques</button>
+        <button id="preliminary" type="button" class="btn btn-dark btn-lg mx-5" onclick="preliminary()"> <a href="#result">Préliminaires classiques</a></button>
         <button id="hotPreliminary" type="button" class="btn btn-dark btn-lg mx-5"
-            onclick="hotPreliminary()">Préliminaires avancés</button>
+            onclick="hotPreliminary()"><a href="#result">Préliminaires avancés</a></button>
         <button id="position" type="button" class="btn btn-dark btn-lg mx-5" onclick="sexualPosition()">La
             suite...</button>
     </aside>
     <!-- Timer zone -->
     <aside id="timer-zone" class="text-center my-5">
-        <p id="timer" class="display-1"></p>
+        <p id="timer" class="display-2"></p>
     </aside>
 
     <!-- result zone -->
 
-    <div id="result" class="display-2 text-center"></div>
+    <div id="result" class="display-3 text-center"></div>
 
     <!-- Sound zone -->
     <audio id="audio" src="./scr/son.mp3">test</audio>
