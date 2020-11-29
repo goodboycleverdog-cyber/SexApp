@@ -1,35 +1,39 @@
+function hotPreliminary() { 
+    // Disable classic prelimary
+    document.getElementById("preliminary").classList.add('d-none');
+    // Start the count
+    start();
 
-function advancedPick() {  
-    let genre = myRand(genres);
-    let bonus = myRand(bonuses,4,10);   
-    let time = myRand(times);
+    genre = getGenre();
+    bonus = getBonus();  
+
   if (genre == "Lui") {
     let parts = ["Anus", "Seins", "Vagin", "Clitoris"];
     let part = myRand(parts);
 
     switch (part) {
         case "Anus":
-            actions = ["Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser", "Double stimulation"];
+            actions = ["Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         case "Seins":
             actions = [ "Embrasser", "Lecher", "Carresser", "Masser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         case "Vagin":
-            actions = ["Embrasser", "Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser", "Double stimulation"];
+            actions = ["Embrasser", "Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         case "Clitoris":
-            actions = [ "Lecher", "Carresser", "Double stimulation", "Masser"];
+            actions = [ "Lecher", "Carresser", "Masser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         default:
@@ -42,27 +46,27 @@ function advancedPick() {
 
     switch (part) {
         case "Anus":
-            actions = ["Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser", "Double stimulation"];
+            actions = ["Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         case "Pénis":
             actions = ["Embrasser", "Masser", "Carresser", "Carresser avec le sextoy", "Sucer", "Lecher"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         case "Anus":
-            actions = ["Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser", "Double stimulation"];
+            actions = ["Lecher", "Pénétrer avec les doigts", "Pénétrer avec un sextoy", "Carresser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
             
         case "Bourse":
             actions = ["Masser", "Carresser"];
             action = myRand(actions);
-            txtInfo(time,genre,part,action,bonus);
+            txtInfoPreliminary(genre,part,action,bonus);
             break;
 
         default:
