@@ -9,11 +9,8 @@ function start() {
     clearInterval(intervalId);
     intervalId = null;
     counter = getRandomArbitrary(150,240);
-    // if (intervalId === null) {
         //Set de l'intervalle d'execution setInterval(functionARejouer[function()],IntervalleDeRepetitionEnMs[Number])
         intervalId = setInterval(count, 1000);
-        
-    // }
 }
 
 function count() {
