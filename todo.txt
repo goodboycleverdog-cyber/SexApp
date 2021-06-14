@@ -1,4 +1,3 @@
-Make all js file only one
 Purge bootstrap css
 Change Bootstrap > Tailwinds css 
 Redevelop interface think phone first 
