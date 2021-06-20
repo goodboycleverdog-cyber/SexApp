@@ -1,17 +1,18 @@
-*{
+html{
     caret-color: transparent !important;
-    cursor:grab;
+    scroll-behavior: smooth;
+    cursor: grab;
 }
 body{
-   
+    
     background-color: black;
     color: blanchedalmond;
 }
-button:hover > a{
-    cursor: pointer;
-}
 h1,#result{
     font-family: 'Yellowtail', cursive;
+}
+button:hover ,a {
+    cursor: grabbing;
 }
 
 a:link, a, a:hover, a:visited, a:active
