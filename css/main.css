@@ -3,11 +3,7 @@ html{
     scroll-behavior: smooth;
     cursor: grab;
 }
-body{
-    
-    background-color: black;
-    color: blanchedalmond;
-}
+
 h1,#result{
     font-family: 'Yellowtail', cursive;
 }

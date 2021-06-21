@@ -17,35 +17,26 @@
     <title>SexPick</title>
 </head>
 
-<body>
-    <h1 class="display-1 text-center mb-5">Sex Pick</h1>
+<body class="bg-black text-yellow-100 text-center">
+    <h1 class="text-7xl my-20">Sex Pick</h1>
     <!-- Pick zone -->
-    <aside id="buttons" class="text-center">
-        <button id="preliminary" type="button" class="btn btn-dark btn-lg mx-5" onclick="pick()"> <a
+    <aside id="buttons" class="md:flex lg:max-w-7xl lg:mx-auto">
+        <button id="preliminary" type="button" class="font-bold text-3xl w-96 my-5 border border-4 rounded-full p-3 mx-auto text-center block" onclick="pick()"> <a
                 href="#result">Préliminaires classiques</a></button>
-        <button id="hotPreliminary" type="button" class="btn btn-dark btn-lg mx-5" onclick="hotPick()"><a
+        <button id="hotPreliminary" type="button" class="font-bold text-3xl w-96 my-5 border border-4 rounded-full p-3 mx-auto text-center block" onclick="hotPick()"><a
                 href="#result">Préliminaires avancés</a></button>
-        <button id="position" type="button" class="btn btn-dark btn-lg mx-5" onclick="sexualPosition()"><a href="">La
-                suite...</a></button>
-
-
-        <div class="relative pt-1 w-75 mx-auto">
-            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-pink-200">
-                <div style="width:30%"
-                    class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500">
-                </div>
-            </div>
-        </div>
+        <button id="position" type="button" class="font-bold text-3xl w-96 my-5 border border-4 rounded-full p-3 mx-auto text-center block" onclick="sexualPosition()">La
+                suite...</button>
 
     </aside>
     <!-- Timer zone -->
 
-    <aside id="timer-zone" class="text-center my-5">
-        <div id="timer" class="display-2">0:00</div>
+    <aside id="timer-zone" class="my-5">
+        <div id="timer" class="text-7xl my-12">0:00</div>
     </aside>
 
     <!-- result zone -->
-    <div id="result" class="display-3 text-center"></div>
+    <div id="result" class="text-7xl"></div>
 
     <!-- Sound zone -->
     <audio id="audio" src="./scr/son.mp3">Son de fin du timer</audio>

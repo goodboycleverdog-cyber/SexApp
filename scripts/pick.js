@@ -98,21 +98,21 @@ function txtInfo(position,type,genre, part, action, bonus) {
         "Assis"
     ];
     const types = [
-        "anal",
-        "vaginal",
-        "vaginal",
-        "vaginal",
-        "vaginal"
+        "Anal",
+        "Vaginal",
+        "Vaginal",
+        "Vaginal",
+        "Vaginal"
     ];
 
     function sexualPosition() {
-        document.getElementById("preliminary").classList.add("d-none");
-        document.getElementById("hotPreliminary").classList.add("d-none");
+        document.getElementById("preliminary").classList.add("hidden");
+        document.getElementById("hotPreliminary").classList.add("hidden");
         start();
         position = myRand(positions);
         type = myRand(types);
 
-        // If choice is anal since we cant go back to vaginal (medical advice) we keep only anal value.
+        // If choice is anal since we cant go back to Vaginal (medical advice) we keep only anal value.
         // we also keep just doable positions
         if (type == "anal") {
             types.length = 1;
@@ -314,7 +314,7 @@ function txtInfo(position,type,genre, part, action, bonus) {
 
     function hotPick() {
         // Disable classic prelimary
-        document.getElementById("preliminary").classList.add('d-none');
+        document.getElementById("preliminary").classList.add('hidden');
 
         partsElle.length = 4
         partsLui.length = 4
