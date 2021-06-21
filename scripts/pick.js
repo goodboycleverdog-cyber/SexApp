@@ -53,18 +53,25 @@ function txtInfo(position,type,genre, part, action, bonus) {
     function playAudio() {
         document.getElementById("audio").play();
     }
+    function progressBar(){
+        myProgressBar=document.getElementById("progressBar") 
+        barWidth= counter*100/originalCounter;
+        myProgressBar.style.width=barWidth+"%";
+    }
 
     function start() {
         clearInterval(intervalId);
         intervalId = null;
         counter = getRandomArbitrary(minCount, maxCount);
-        document.getElementById("timer").innerHTML = counter
+        originalCounter=counter;
+        document.getElementById("timer").innerHTML = counter;
         //Set de l'intervalle d'execution setInterval(functionARejouer[function()],IntervalleDeRepetitionEnMs[Number])
         intervalId = setInterval(count, 1000);
     }
 
     function count() {
-        document.getElementById("timer").innerHTML = counter
+        progressBar();
+        document.getElementById("timer").innerHTML = counter;
         counter--;
         document.getElementById("timer").innerHTML = counter
         counter == 0 ? finish() : document.getElementById("timer").innerHTML = counter
@@ -72,11 +79,13 @@ function txtInfo(position,type,genre, part, action, bonus) {
 
     function finish() {
         clearInterval(intervalId);
+        myProgressBar.style.width=0+"%";
         document.getElementById("timer").innerHTML = "Fin";
         playAudio()
         //Reset de l'intervalle
         intervalId = null;
     }
+
     ////////////////////////////////////////////////////
     ////////////////////////GENRE///////////////////////
     ////////////////////////////////////////////////////
@@ -167,7 +176,7 @@ function txtInfo(position,type,genre, part, action, bonus) {
         genre = getGenre();
         bonus = getBonus();
 
-        if (getGenre() == "Lui") {
+        if (genre == "Lui") {
             let part = myRand(partsElle);
 
             switch (part) {
