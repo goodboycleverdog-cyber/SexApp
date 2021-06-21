@@ -1,18 +1,29 @@
-html{
+html {
     caret-color: transparent !important;
     scroll-behavior: smooth;
     cursor: grab;
 }
 
-h1,#result{
+h1,
+#result {
     font-family: 'Yellowtail', cursive;
+
 }
-button:hover ,a {
+
+h1 {
+    font-size: 8rem
+}
+
+button:hover,
+a {
     cursor: grabbing;
 }
 
-a:link, a, a:hover, a:visited, a:active
-{ 
- text-decoration:none; 
- color: inherit !important;
-} 
+a:link,
+a,
+a:hover,
+a:visited,
+a:active {
+    text-decoration: none;
+    color: inherit !important;
+}
