@@ -123,7 +123,7 @@ function txtInfo(position,type,genre, part, action, bonus) {
 
         // If choice is anal since we cant go back to Vaginal (medical advice) we keep only anal value.
         // we also keep just doable positions
-        if (type == "anal") {
+        if (type == "Anal") {
             types.length = 1;
             positions.length = 3;
         }
@@ -134,7 +134,7 @@ function txtInfo(position,type,genre, part, action, bonus) {
     ////////////////////////BONUS///////////////////////
     ////////////////////////////////////////////////////
     const bonuses = [
-        "assis",
+        "Assis",
         "Au bord du lit",
         "debout",
         "À quatre pattes",
