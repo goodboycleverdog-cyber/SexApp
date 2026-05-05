@@ -8,103 +8,125 @@
   <script src="./scripts/data.js"></script>
   <script src="./scripts/pick.js"></script>
 </head>
-
 <body>
+  <main class="app">
+    <section class="main-panel">
+      <header class="app-header">
+        <span class="tag">Sélection aléatoire</span>
+        <h1>Sex Pick</h1>
+        <p>Choisis une étape, lance le timer, puis avance ou passe le résultat.</p>
+      </header>
 
-<main class="app">
+      <section class="timer-card" aria-live="polite">
+        <div class="timer-topline">
+          <span id="statusBadge" class="status-badge">Prêt</span>
+          <span id="currentCategory" class="muted">Aucune sélection</span>
+        </div>
 
-  <section class="main-panel">
+        <div id="timer" class="timer">2:00</div>
 
-    <h1>Sex Pick</h1>
+        <div class="progress-track" aria-hidden="true">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+      </section>
 
-    <!-- TIMER -->
-    <div class="timer-card">
-      <div class="timer-topline">
-        <span id="statusBadge">Prêt</span>
-        <span id="currentCategory">Aucune sélection</span>
+      <section id="result" class="result-card empty">
+        <div id="resultContent">
+          <p>Le résultat apparaîtra ici.</p>
+        </div>
+        <button id="copyButton" class="copy-btn" type="button" disabled>Copier</button>
+      </section>
+
+      <div class="feedback-actions">
+        <button id="passButton" type="button">Passer ce choix</button>
+        <button id="nextPhaseButton" type="button" class="primary-action">Étape suivante</button>
       </div>
 
-      <div id="timer">2:00</div>
+      <section class="choice-grid" aria-label="Choisir une étape">
+        <button type="button" class="choice-card" data-category="classic">
+          <strong>Classique</strong>
+          <span>Idées douces</span>
+        </button>
 
-      <div class="progress-track">
-        <div id="progressBar"></div>
+        <button type="button" class="choice-card highlight" data-category="advanced">
+          <strong>Avancé</strong>
+          <span>Idées plus intenses</span>
+        </button>
+
+        <button type="button" class="choice-card" data-category="toy">
+          <strong>Accessoires</strong>
+          <span>Options compatibles</span>
+        </button>
+
+        <button type="button" class="choice-card surprise" data-category="position">
+          <strong>Position</strong>
+          <span>Changer de placement</span>
+        </button>
+      </section>
+    </section>
+
+    <aside class="side-panel">
+      <section class="panel-card">
+        <div class="panel-title">
+          <h2>Filtres</h2>
+          <button id="resetPreferences" type="button">Reset</button>
+        </div>
+
+        <label class="filter-line">
+          <span>Doux uniquement</span>
+          <input id="softOnly" type="checkbox">
+        </label>
+
+        <label class="filter-line">
+          <span>Inclure accessoires</span>
+          <input id="includeToys" type="checkbox" checked>
+        </label>
+
+        <label class="select-line">
+          <span>Position actuelle</span>
+          <select id="positionSelect"></select>
+        </label>
+
+        <div class="timer-control">
+          <div>
+            <span>Durée du timer</span>
+            <strong id="timerDurationLabel">2:00</strong>
+          </div>
+          <input id="timerDuration" type="range" min="30" max="300" step="30" value="120">
+        </div>
+      </section>
+
+      <section class="panel-card">
+        <div class="panel-title">
+          <h2>Historique</h2>
+          <button id="clearHistory" type="button">Effacer</button>
+        </div>
+        <p class="muted">Sauvegardé localement sur cet appareil.</p>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </aside>
+  </main>
+
+  <section id="confirmModal" class="modal" hidden>
+    <div id="modalBackdrop" class="modal-backdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Changer d’étape ?</h2>
+      <p>Le timer est déjà en cours. Passer à <strong id="modalCategory">l’étape suivante</strong> sans remettre le temps à zéro ?</p>
+      <div class="modal-actions">
+        <button id="cancelChange" type="button">Annuler</button>
+        <button id="confirmChange" type="button" class="primary-action">Confirmer</button>
       </div>
     </div>
-
-    <!-- RESULT -->
-    <div id="result" class="result-card">
-      Le résultat apparaîtra ici
-    </div>
-
-    <!-- ACTIONS -->
-    <div class="feedback-actions">
-      <button id="passButton">Passer</button>
-      <button id="nextPhaseButton">Étape suivante</button>
-    </div>
-
-    <!-- PHASE BUTTONS -->
-    <div class="choice-grid">
-      <button data-category="classic">Classique</button>
-      <button data-category="advanced">Avancé</button>
-      <button data-category="toy">Accessoires</button>
-      <button data-category="position">Position</button>
-    </div>
-
   </section>
 
-  <!-- SIDE -->
-  <aside class="side-panel">
-
-    <div class="panel-card">
-
-      <h2>Filtres</h2>
-
-      <label>
-        Doux uniquement
-        <input id="softOnly" type="checkbox">
-      </label>
-
-      <label>
-        Inclure accessoires
-        <input id="includeToys" type="checkbox" checked>
-      </label>
-
-      <label>
-        Position
-        <select id="positionSelect"></select>
-      </label>
-
-      <input id="timerDuration" type="range" min="30" max="300" step="30" value="120">
-      <div id="timerDurationLabel">2:00</div>
-
+  <section id="cookieBanner" class="cookie-banner" hidden>
+    <div>
+      <strong>Préférences locales</strong>
+      <p>L’app sauvegarde les filtres, les choix passés et l’historique localement.</p>
     </div>
+    <button id="acceptCookies" type="button">OK</button>
+  </section>
 
-    <div class="panel-card">
-      <h2>Historique</h2>
-      <button id="clearHistory">Effacer</button>
-      <div id="historyList"></div>
-    </div>
-
-  </aside>
-
-</main>
-
-<!-- MODAL -->
-<div id="confirmModal" hidden>
-  <div id="modalBackdrop"></div>
-  <div class="modal-card">
-    <h2>Changer d’étape ?</h2>
-    <p>Passer à <span id="modalCategory"></span> ?</p>
-    <button id="cancelChange">Annuler</button>
-    <button id="confirmChange">Confirmer</button>
-  </div>
-</div>
-
-<!-- COOKIE -->
-<div id="cookieBanner">
-  <p>Sauvegarde locale</p>
-  <button id="acceptCookies">OK</button>
-</div>
-
+  <audio id="audio" src="./scr/son.mp3" preload="auto"></audio>
 </body>
 </html>
