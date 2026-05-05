@@ -1,54 +1,98 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/0.0.0-359252c/tailwind.min.css">
-
-    <!-- Css added -->
-    <link rel="stylesheet" href="./css/main.css">
-
-    <!-- Polices -->
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
-    <!-- JS -->
-    <script src="./scripts/pick.js"></script>
-    <title>SexPick</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sex Pick</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/main.css" />
+  <script src="./scripts/data.js" defer></script>
+  <script src="./scripts/pick.js" defer></script>
 </head>
+<body>
+  <main class="app-shell">
+    <section class="hero-card" aria-labelledby="app-title">
+      <div class="eyebrow">Random picker</div>
+      <h1 id="app-title">Sex Pick</h1>
+      <p class="hero-copy">Choose a category, adjust the filters, and let the app select the next step.</p>
 
-<body class="bg-black text-yellow-100 text-center">
-    <h1 class="my-2">Sex Pick</h1>
-    <!-- Pick zone -->
-    <aside id="buttons" class="md:flex lg:max-w-7xl lg:mx-auto">
-        <button id="preliminary" type="button"
-            class="font-bold text-3xl w-96 my-3 border border-4 rounded-full p-3 mx-auto text-center block"
-            onclick="pick()"> <a href="#result">Préliminaires classiques</a></button>
-        <button id="hotPreliminary" type="button"
-            class="font-bold text-3xl w-96 my-3 border border-4 rounded-full p-3 mx-auto text-center block"
-            onclick="hotPick()"><a href="#result">Préliminaires avancés</a></button>
-        <button id="position" type="button"
-            class="font-bold text-3xl w-96 my-3 border border-4 rounded-full p-3 mx-auto text-center block"
-            onclick="sexualPosition()">La
-            suite...</button>
+      <div class="primary-actions" aria-label="Pick a category">
+        <button class="action-card" type="button" data-action="pick" data-category="classic">
+          <span class="action-title">Classic</span>
+          <span class="action-copy">Soft preliminary ideas</span>
+        </button>
+        <button class="action-card accent" type="button" data-action="pick" data-category="advanced">
+          <span class="action-title">Advanced</span>
+          <span class="action-copy">More intense ideas</span>
+        </button>
+        <button class="action-card neutral" type="button" data-action="pick" data-category="position">
+          <span class="action-title">Next step</span>
+          <span class="action-copy">Random position</span>
+        </button>
+      </div>
+    </section>
 
-    </aside>
-    <!-- Timer zone -->
-    <div class="mt-2 bg-gray-600 rounded-full w-10/12 mx-auto">
-        <div id="progressBar" class="mt-2 bg-pink-900 py-1 text-center rounded-full">
-            <div class="text-white text-sm inline-block bg-pink-700 px-2 rounded-full" ></div>
+    <section class="panel" aria-labelledby="filters-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="filters-title">Filters</h2>
+          <p>Control what can be selected.</p>
         </div>
+        <button id="resetPreferences" class="ghost-button" type="button">Reset</button>
+      </div>
+
+      <div class="filter-grid" id="filters"></div>
+
+      <label class="timer-control" for="durationRange">
+        <span>Timer duration</span>
+        <strong id="durationLabel">2:00</strong>
+      </label>
+      <input id="durationRange" class="range" type="range" min="30" max="300" step="15" value="120" />
+    </section>
+
+    <section class="panel result-panel" aria-live="polite">
+      <div class="status-row">
+        <span id="statusBadge" class="status-badge">Ready</span>
+        <span id="lastCategory" class="muted">No category selected</span>
+      </div>
+
+      <div class="progress-track" aria-hidden="true">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <div id="timer" class="timer">--:--</div>
+
+      <article id="result" class="result-card empty">
+        <p class="placeholder">Your result will appear here.</p>
+      </article>
+
+      <div class="feedback-actions" aria-label="Result feedback">
+        <button id="likeButton" class="feedback-button" type="button" disabled>Like</button>
+        <button id="passButton" class="feedback-button" type="button" disabled>Pass</button>
+      </div>
+    </section>
+
+    <section class="panel history-panel" aria-labelledby="history-title">
+      <div class="panel-header">
+        <div>
+          <h2 id="history-title">History</h2>
+          <p>Recent picks are kept locally on this device.</p>
+        </div>
+        <button id="clearHistory" class="ghost-button" type="button">Clear</button>
+      </div>
+      <ul id="historyList" class="history-list"></ul>
+    </section>
+  </main>
+
+  <aside id="cookieBanner" class="cookie-banner" hidden>
+    <div>
+      <strong>Local preferences</strong>
+      <p>This app saves your filters, likes, passes, and history locally on this device. No account required.</p>
     </div>
-    <aside id="timer-zone" class="my-3">
-        <div id="timer" class="text-7xl my-5"></div>
-    </aside>
+    <button id="acceptStorage" type="button">Accept</button>
+  </aside>
 
-    <!-- result zone -->
-    <div id="result" class="text-7xl"></div>
-
-    <!-- Sound zone -->
-    <audio id="audio" src="./scr/son.mp3">Son de fin du timer</audio>
-
+  <audio id="audio" src="./scr/son.mp3" preload="auto">Timer end sound</audio>
 </body>
-
 </html>
