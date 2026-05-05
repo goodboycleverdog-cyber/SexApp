@@ -1,331 +1,293 @@
-////////////////////////////////////////////////////
-////////////////MATH FUNCTION///////////////////////
-////////////////////////////////////////////////////
-function myRand(array, chanceItHappen, ofTotalChance) {
-    if (!chanceItHappen && !ofTotalChance) {
-        return array[Math.floor((Math.random() * array.length))];
-    }
-    //error gestion
-    if ((Math.floor((Math.random() * ofTotalChance)) > chanceItHappen)) {
-        console.log("myRand function failed due to wrong parameters")
-        console.log("chanceItHappen must be inferior to ofTotalChance")
-        return;
-    } else {
-        return array[Math.floor((Math.random() * array.length))];
-    }
+const STORAGE_KEY = "sexpick.preferences.v2";
+
+const defaultState = {
+  storageAccepted: false,
+  mode: "idle",
+  duration: 120,
+  filters: {
+    classic: true,
+    advanced: true,
+    position: true,
+    softOnly: false
+  },
+  currentResult: null,
+  history: [],
+  liked: [],
+  passed: [],
+  recentIds: []
 };
 
-function getRandomArbitrary(min, max) {
-    //error gestion
-    if (!min || !max) {
-        console.log("one of both parameters are missing in getRandomArbitrary function");
-    } else {
-        return Math.floor(Math.random() * (max - min) + min);
-    }
+let state = loadState();
+let intervalId = null;
+let remainingSeconds = state.duration;
 
+const selectors = {
+  filters: document.querySelector("#filters"),
+  durationRange: document.querySelector("#durationRange"),
+  durationLabel: document.querySelector("#durationLabel"),
+  progressBar: document.querySelector("#progressBar"),
+  timer: document.querySelector("#timer"),
+  result: document.querySelector("#result"),
+  statusBadge: document.querySelector("#statusBadge"),
+  lastCategory: document.querySelector("#lastCategory"),
+  historyList: document.querySelector("#historyList"),
+  cookieBanner: document.querySelector("#cookieBanner"),
+  acceptStorage: document.querySelector("#acceptStorage"),
+  likeButton: document.querySelector("#likeButton"),
+  passButton: document.querySelector("#passButton"),
+  clearHistory: document.querySelector("#clearHistory"),
+  resetPreferences: document.querySelector("#resetPreferences"),
+  audio: document.querySelector("#audio")
+};
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return saved ? { ...defaultState, ...saved, filters: { ...defaultState.filters, ...saved.filters } } : structuredClone(defaultState);
+  } catch {
+    return structuredClone(defaultState);
+  }
 }
-////////////////////////////////////////////////////
-////////////////TEXT FUNCTION///////////////////////
-////////////////////////////////////////////////////
-function txtInfo(position,type,genre, part, action, bonus) {
-    if (position, type) {
-        //Cas pour les positions post préliminaires 
-        document.getElementById("result").innerHTML = `
-    ${type}<br>
-    ${position}<br>`
-    } else {
-        //Cas pour les préliminaires
-        document.getElementById("result").innerHTML = `
-    ${genre} <br>
-    ${part}<br>
-    ${action}<br>
-    ${bonus}`
-    }
+
+function saveState() {
+  if (!state.storageAccepted) return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
-    ////////////////////////////////////////////////////
-    ////////////////////////TIMER///////////////////////
-    ////////////////////////////////////////////////////
-    const minCount = 120;
-    const maxCount = 240;
-    let counter;
-    let intervalId = null;
 
-    function playAudio() {
-        document.getElementById("audio").play();
-    }
-    function progressBar(){
-        myProgressBar=document.getElementById("progressBar") 
-        barWidth= counter*100/originalCounter;
-        myProgressBar.style.width=barWidth+"%";
-    }
+function randomItem(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
 
-    function start() {
-        clearInterval(intervalId);
-        intervalId = null;
-        counter = getRandomArbitrary(minCount, maxCount);
-        originalCounter=counter;
-        document.getElementById("timer").innerHTML = counter;
-        //Set de l'intervalle d'execution setInterval(functionARejouer[function()],IntervalleDeRepetitionEnMs[Number])
-        intervalId = setInterval(count, 1000);
-    }
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60).toString();
+  const rest = (seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${rest}`;
+}
 
-    function count() {
-        progressBar();
-        document.getElementById("timer").innerHTML = counter;
-        counter--;
-        document.getElementById("timer").innerHTML = counter
-        counter == 0 ? finish() : document.getElementById("timer").innerHTML = counter
-    }
+function getItemId(category, item, action = "") {
+  if (category === "position") return `${category}:${item.type}:${item.position}`;
+  return `${category}:${item.target}:${item.part}:${action}`;
+}
 
-    function finish() {
-        clearInterval(intervalId);
-        myProgressBar.style.width=0+"%";
-        document.getElementById("timer").innerHTML = "Fin";
-        playAudio()
-        //Reset de l'intervalle
-        intervalId = null;
-    }
+function buildResult(category, item) {
+  const categoryLabel = SEX_PICK_DATA.categories[category].label;
 
-    ////////////////////////////////////////////////////
-    ////////////////////////GENRE///////////////////////
-    ////////////////////////////////////////////////////
-    const genres = ['Elle', 'Lui'];
-    let genre;
+  if (category === "position") {
+    return {
+      id: getItemId(category, item),
+      category,
+      label: categoryLabel,
+      title: `${item.type} Â· ${item.position}`,
+      description: "Selected position",
+      meta: item.intensity
+    };
+  }
 
-    function getGenre() {
-        return myRand(genres);
-    }
-    ////////////////////////////////////////////////////
-    /////////////////////POSITION///////////////////////
-    ////////////////////////////////////////////////////
-    const positions = [
-        "Quatre pattes",
-        "Bord du lit",
-        "Debout",
-        "Elle dessus",
-        "Lui dessus",
-        "Assis"
-    ];
-    const types = [
-        "Anal",
-        "Vaginal",
-        "Vaginal",
-        "Vaginal",
-        "Vaginal"
-    ];
+  const action = randomItem(item.actions);
+  const bonus = Math.random() > 0.5 ? randomItem(SEX_PICK_DATA.bonuses) : "No bonus";
 
-    function sexualPosition() {
-        document.getElementById("preliminary").classList.add("hidden");
-        document.getElementById("hotPreliminary").classList.add("hidden");
-        start();
-        position = myRand(positions);
-        type = myRand(types);
+  return {
+    id: getItemId(category, item, action),
+    category,
+    label: categoryLabel,
+    title: `${item.target} Â· ${item.part}`,
+    description: action,
+    meta: bonus
+  };
+}
 
-        // If choice is anal since we cant go back to Vaginal (medical advice) we keep only anal value.
-        // we also keep just doable positions
-        if (type == "Anal") {
-            types.length = 1;
-            positions.length = 3;
-        }
+function getCandidateItems(category) {
+  const group = SEX_PICK_DATA.categories[category];
+  if (!group || !state.filters[category]) return [];
 
-        txtInfo(position, type);
-    }
-    ////////////////////////////////////////////////////
-    ////////////////////////BONUS///////////////////////
-    ////////////////////////////////////////////////////
-    const bonuses = [
-        "Assis",
-        "Au bord du lit",
-        "debout",
-        "À quatre pattes",
-        "Les yeux bandés",
-        "Mains attachées",
-    ];
+  return group.items.filter((item) => {
+    if (state.filters.softOnly && item.intensity !== "soft") return false;
+    return true;
+  });
+}
 
-    let bonus;
+function pickResult(category) {
+  const candidates = getCandidateItems(category);
+  if (!candidates.length) {
+    showEmptyResult("No result available with the current filters.");
+    return;
+  }
 
-    function getBonus() {
-        bonus = myRand(bonuses, 1, 2);
-        return bonus;
-    }
-    ////////////////////////////////////////////////////
-    ////////////////////////PICKS///////////////////////
-    ////////////////////////////////////////////////////
-    let partsElle = [
-        "Anus",
-        "Seins",
-        "Vagin",
-        "Clitoris",
-        "Cou",
-        "Fesse"
-    ];
-    let partsLui = [
-        "Anus",
-        "Pénis",
-        "Bourse",
-        "Pénis",
-        "Cou",
-        "Fesse"
-    ];
+  const nonRecentCandidates = candidates.filter((item) => {
+    const possibleId = category === "position" ? getItemId(category, item) : null;
+    return possibleId ? !state.recentIds.includes(possibleId) : true;
+  });
 
-    function pick() {
+  const baseItem = randomItem(nonRecentCandidates.length ? nonRecentCandidates : candidates);
+  let result = buildResult(category, baseItem);
 
-        //Start counter
-        start();
+  let guard = 0;
+  while (state.recentIds.includes(result.id) && guard < 10) {
+    result = buildResult(category, randomItem(candidates));
+    guard += 1;
+  }
 
-        genre = getGenre();
-        bonus = getBonus();
+  state.currentResult = result;
+  state.recentIds = [result.id, ...state.recentIds.filter((id) => id !== result.id)].slice(0, 8);
+  state.history = [result, ...state.history].slice(0, 6);
 
-        if (genre == "Lui") {
-            let part = myRand(partsElle);
+  saveState();
+  renderResult(result);
+  renderHistory();
+  startTimer();
+}
 
-            switch (part) {
-                case "Anus":
-                    actions = [
-                        "Lecher",
-                        "Pénétrer avec les doigts",
-                        "Pénétrer avec un sextoy",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
+function startTimer() {
+  clearInterval(intervalId);
+  state.mode = "running";
+  remainingSeconds = state.duration;
+  updateTimerUI();
+  setButtonsDisabled(true);
 
-                case "Seins":
-                    actions = [
-                        "Embrasser",
-                        "Lecher",
-                        "Carresser",
-                        "Masser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
+  intervalId = setInterval(() => {
+    remainingSeconds -= 1;
+    updateTimerUI();
 
-                case "Vagin":
-                    actions = [
-                        "Embrasser",
-                        "Lecher",
-                        "Pénétrer avec les doigts",
-                        "Pénétrer avec un sextoy",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
+    if (remainingSeconds <= 0) finishTimer();
+  }, 1000);
+}
 
-                case "Clitoris":
-                    actions = [
-                        "Lecher",
-                        "Carresser",
-                        "Masser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
-                    case "Cou":
-                        actions = [
-                            "Embrasser",
-                            "Masser",
-                            "Carresser"
-                        ];
-                        action = myRand(actions);
-                        txtInfo(false,false,genre, part, action, bonus);
-                        break;
-    
-                    case "Fesse":
-                        actions = [
-                            "Lecher",
-                            "Carresser"
-                        ];
-                        action = myRand(actions);
-                        txtInfo(false,false,genre, part, action, bonus);
-                        break;
+function finishTimer() {
+  clearInterval(intervalId);
+  intervalId = null;
+  state.mode = "finished";
+  selectors.statusBadge.textContent = "Finished";
+  selectors.timer.textContent = "Done";
+  selectors.progressBar.style.width = "100%";
+  setButtonsDisabled(false);
+  selectors.audio?.play().catch(() => {});
+}
 
-                default:
-                    console.log("An error occur in the function pick() or in the function hotpick() because the parameter partElle is not one of the defined case");
-                    break;
-            }
+function updateTimerUI() {
+  const elapsed = state.duration - remainingSeconds;
+  const percentage = Math.min(100, Math.max(0, (elapsed / state.duration) * 100));
+  selectors.statusBadge.textContent = state.mode === "running" ? "Running" : "Ready";
+  selectors.timer.textContent = formatTime(Math.max(remainingSeconds, 0));
+  selectors.progressBar.style.width = `${percentage}%`;
+}
 
-        } else {
-            let part = myRand(partsLui);
+function setButtonsDisabled(disabled) {
+  document.querySelectorAll("[data-action='pick']").forEach((button) => {
+    button.disabled = disabled;
+  });
+}
 
-            switch (part) {
-                case "Anus":
-                    actions = [
-                        "Lecher",
-                        "Pénétrer avec les doigts",
-                        "Pénétrer avec un sextoy",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
-                case "Cou":
-                    actions = [
-                        "Embrasser",
-                        "Masser",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
-                case "Fesse":
-                    actions = [
-                        "Lecher",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
-                case "Pénis":
-                    actions = [
-                        "Embrasser",
-                        "Masser",
-                        "Carresser",
-                        "Carresser avec le sextoy",
-                        "Sucer",
-                        "Lecher"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
-                case "Anus":
-                    actions = [
-                        "Lecher",
-                        "Pénétrer avec les doigts",
-                        "Pénétrer avec un sextoy",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
-                case "Bourse":
-                    actions = [
-                        "Masser",
-                        "Carresser"
-                    ];
-                    action = myRand(actions);
-                    txtInfo(false,false,genre, part, action, bonus);
-                    break;
+function renderResult(result) {
+  selectors.result.className = "result-card updated";
+  selectors.result.innerHTML = `
+    <div class="result-label">${result.label}</div>
+    <div class="result-main">${result.title}</div>
+    <div class="result-meta">${result.description}</div>
+    <div class="result-meta">Bonus: ${result.meta}</div>
+  `;
+  selectors.lastCategory.textContent = result.label;
+  selectors.likeButton.disabled = false;
+  selectors.passButton.disabled = false;
+}
 
-                default:
-                    console.log("An error occur in the function pick() or in the function hotpick() because the parameter partLui is not one of the defined case");
-                    break;
-            }
-        }
-    }
-    ////////////////////////////////////////////////////
-    ////////////////////////PICKS///////////////////////
-    ////////////////////////////////////////////////////
+function showEmptyResult(message) {
+  selectors.result.className = "result-card empty";
+  selectors.result.innerHTML = `<p class="placeholder">${message}</p>`;
+  selectors.likeButton.disabled = true;
+  selectors.passButton.disabled = true;
+}
 
-    //hotpick restrict the choices to the first 4 values of parts array
+function renderFilters() {
+  selectors.filters.innerHTML = SEX_PICK_DATA.filters.map((filter) => `
+    <label class="filter-pill">
+      <input type="checkbox" data-filter="${filter.id}" ${state.filters[filter.id] ? "checked" : ""} />
+      <span>${filter.label}</span>
+    </label>
+  `).join("");
+}
 
-    function hotPick() {
-        // Disable classic prelimary
-        document.getElementById("preliminary").classList.add('hidden');
+function renderHistory() {
+  if (!state.history.length) {
+    selectors.historyList.innerHTML = `<li>No history yet.</li>`;
+    return;
+  }
 
-        partsElle.length = 4
-        partsLui.length = 4
-        pick()
-    }
+  selectors.historyList.innerHTML = state.history.map((item) => `
+    <li><strong>${item.label}</strong><br>${item.title} â ${item.description}</li>
+  `).join("");
+}
+
+function renderPreferences() {
+  selectors.durationRange.value = state.duration;
+  selectors.durationLabel.textContent = formatTime(state.duration);
+  selectors.cookieBanner.hidden = state.storageAccepted;
+}
+
+function handleFeedback(type) {
+  if (!state.currentResult) return;
+  const opposite = type === "liked" ? "passed" : "liked";
+
+  state[type] = [state.currentResult.id, ...state[type].filter((id) => id !== state.currentResult.id)].slice(0, 50);
+  state[opposite] = state[opposite].filter((id) => id !== state.currentResult.id);
+
+  selectors.statusBadge.textContent = type === "liked" ? "Liked" : "Passed";
+  saveState();
+}
+
+function attachEvents() {
+  document.querySelectorAll("[data-action='pick']").forEach((button) => {
+    button.addEventListener("click", () => pickResult(button.dataset.category));
+  });
+
+  selectors.filters.addEventListener("change", (event) => {
+    const filter = event.target.dataset.filter;
+    if (!filter) return;
+    state.filters[filter] = event.target.checked;
+    saveState();
+  });
+
+  selectors.durationRange.addEventListener("input", (event) => {
+    state.duration = Number(event.target.value);
+    selectors.durationLabel.textContent = formatTime(state.duration);
+    if (state.mode !== "running") selectors.timer.textContent = formatTime(state.duration);
+    saveState();
+  });
+
+  selectors.acceptStorage.addEventListener("click", () => {
+    state.storageAccepted = true;
+    saveState();
+    selectors.cookieBanner.hidden = true;
+  });
+
+  selectors.likeButton.addEventListener("click", () => handleFeedback("liked"));
+  selectors.passButton.addEventListener("click", () => handleFeedback("passed"));
+
+  selectors.clearHistory.addEventListener("click", () => {
+    state.history = [];
+    state.recentIds = [];
+    saveState();
+    renderHistory();
+  });
+
+  selectors.resetPreferences.addEventListener("click", () => {
+    const storageAccepted = state.storageAccepted;
+    state = structuredClone(defaultState);
+    state.storageAccepted = storageAccepted;
+    saveState();
+    renderFilters();
+    renderHistory();
+    renderPreferences();
+    showEmptyResult("Your result will appear here.");
+    updateTimerUI();
+  });
+}
+
+function init() {
+  renderFilters();
+  renderHistory();
+  renderPreferences();
+  selectors.timer.textContent = formatTime(state.duration);
+  attachEvents();
+}
+
+init();
