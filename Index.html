@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sex Pick</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0a12;
+  --surface:rgba(255,255,255,0.06);
+  --surface-strong:rgba(255,255,255,0.1);
+  --border:rgba(255,255,255,0.1);
+  --border-hover:rgba(255,111,168,0.5);
+  --text:#f5eef5;
+  --muted:rgba(245,238,245,0.5);
+  --hint:rgba(245,238,245,0.3);
+  --rose:#ff6fa8;
+  --rose-dim:rgba(255,111,168,0.15);
+  --purple:#8d5cff;
+  --purple-dim:rgba(141,92,255,0.15);
+  --success:#5effa0;
+  --r:20px;
+  --r-sm:12px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:1rem 1rem 5rem;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 15% 0%,rgba(255,111,168,0.18) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 100%,rgba(141,92,255,0.18) 0%,transparent 50%);
+  pointer-events:none;
+  z-index:0;
+}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto}
+
+/* HEADER */
+.app-header{padding:1.5rem 0 1rem;text-align:center}
+.tag{
+  display:inline-block;padding:6px 14px;border-radius:999px;
+  border:1px solid rgba(255,111,168,0.4);
+  background:rgba(255,111,168,0.1);
+  color:#ffadd0;font-family:'Syne',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:12px;
+}
+h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(3rem,12vw,5.5rem);
+  font-weight:800;line-height:.9;letter-spacing:-.04em;
+}
+.app-header p{font-size:14px;color:var(--muted);margin-top:10px;font-weight:300}
+
+/* GRID LAYOUT */
+.app{display:grid;gap:14px}
+@media(min-width:800px){
+  .app{grid-template-columns:1fr 300px;align-items:start}
+  .side-panel{grid-row:1/3}
+}
+
+/* CARDS */
+.card{
+  border:1px solid var(--border);border-radius:var(--r);
+  background:var(--surface);padding:1.25rem;
+}
+
+/* TIMER */
+.timer-topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.status-badge{
+  padding:6px 14px;border-radius:999px;
+  background:var(--rose-dim);color:#ffadd0;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+}
+#currentCategory{font-size:13px;color:var(--muted)}
+.timer{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(5rem,20vw,8rem);
+  font-weight:800;line-height:1;letter-spacing:-.04em;
+  text-align:center;padding:.5rem 0;
+}
+.progress-track{height:6px;border-radius:999px;background:rgba(255,255,255,0.1);overflow:hidden;margin-top:8px}
+
+.timer-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.btn,.choice-card,.copy-btn,.panel-title button,.cookie-banner button{touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,111,168,.25)}
+.btn.small{padding:11px 12px;font-size:13px}
+.status-error{margin-top:10px;color:#ffadd0;font-size:13px;line-height:1.4}
+.progress-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--rose),var(--purple));width:0%;transition:width 250ms linear}
+
+/* RESULT */
+.result-card{
+  min-height:180px;display:flex;flex-direction:column;justify-content:center;
+  border:1px solid var(--border);border-radius:var(--r);
+  background:rgba(0,0,0,0.25);padding:1.25rem;
+}
+.result-card.empty{align-items:center;text-align:center;color:var(--hint)}
+.result-category{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#resultContent h2{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.8rem,6vw,3rem);
+  font-weight:800;line-height:1.05;letter-spacing:-.02em;
+  margin-top:8px;
+}
+.role-line{
+  display:inline-flex;margin-top:12px;padding:7px 14px;
+  border:1px solid var(--border);border-radius:999px;
+  background:var(--surface);font-size:13px;font-weight:500;
+}
+.action-line{margin-top:10px;font-size:15px;font-weight:500;line-height:1.5}
+.copy-btn{
+  align-self:flex-end;margin-top:14px;
+  padding:8px 18px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;
+  transition:all .15s;
+}
+.copy-btn:hover:not(:disabled){background:var(--surface-strong)}
+.copy-btn.copied{color:var(--success);border-color:rgba(94,255,160,.4);background:rgba(94,255,160,.1)}
+.copy-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ACTIONS */
+.feedback-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{
+  padding:14px 16px;border-radius:var(--r-sm);border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;
+}
+.btn:hover{background:var(--surface-strong);border-color:var(--border-hover)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--rose),var(--purple));border-color:transparent}
+.btn.primary:hover{opacity:.9}
+
+/* CHOICE GRID */
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice-card{
+  min-height:100px;padding:1rem 1.1rem;border-radius:var(--r-sm);
+  border:1px solid var(--border);background:var(--surface);
+  text-align:left;color:var(--text);cursor:pointer;transition:all .15s;
+}
+.choice-card:hover,.choice-card.selected{border-color:var(--border-hover);background:var(--rose-dim)}
+.choice-card.adv{background:rgba(141,92,255,.1)}
+.choice-card.adv:hover,.choice-card.adv.selected{background:var(--purple-dim);border-color:rgba(141,92,255,.5)}
+.choice-card strong{display:block;font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;line-height:1.1}
+.choice-card span{display:block;margin-top:6px;font-size:12px;color:var(--muted);font-weight:400}
+
+/* SIDE PANEL */
+.side-panel{display:grid;gap:14px}
+.panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel-title h2{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700}
+.panel-title button{
+  padding:5px 14px;border-radius:999px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;
+}
+.panel-title button:hover{background:var(--surface);color:var(--text)}
+.filter-line{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  font-size:14px;font-weight:400;color:var(--muted);
+}
+.filter-line:last-of-type{border-bottom:none}
+.filter-line input[type=checkbox]{width:18px;height:18px;accent-color:var(--rose);cursor:pointer}
+.select-line{display:grid;gap:8px;margin:12px 0;font-size:13px;color:var(--muted)}
+.select-line select{
+  width:100%;padding:10px 12px;border-radius:var(--r-sm);
+  border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;
+}
+.timer-control{margin-top:12px}
+.timer-control-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.timer-control-top strong{color:var(--text);font-size:14px}
+.timer-control input[type=range]{width:100%;accent-color:var(--rose)}
+
+/* HISTORY */
+.history-empty{font-size:13px;color:var(--hint);margin-top:8px}
+.history-list{display:grid;gap:8px;margin-top:10px}
+.history-item{
+  padding:10px 14px;border-radius:var(--r-sm);border:1px solid var(--border);
+  background:var(--surface);
+}
+.history-item strong{display:block;font-size:13px;font-weight:500}
+.history-item span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+
+/* MODAL */
+.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:1rem}
+.modal[hidden]{display:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px)}
+.modal-card{
+  position:relative;z-index:1;width:min(460px,100%);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:1.5rem;background:#160f20;
+}
+.modal-card h2{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:10px}
+.modal-card p{font-size:14px;color:var(--muted);line-height:1.6}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+
+/* COOKIE */
+.cookie-banner{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  width:min(700px,calc(100% - 32px));z-index:40;
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+  padding:18px 20px;border:1px solid var(--border);border-radius:var(--r);
+  background:rgba(12,10,18,.96);
+}
+.cookie-banner[hidden]{display:none}
+.cookie-banner p{font-size:13px;color:var(--muted);margin-top:4px}
+.cookie-banner button{
+  padding:10px 22px;border-radius:999px;border:1px solid var(--border);
+  background:var(--surface-strong);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;
+  white-space:nowrap;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-header">
+    <div class="tag">Sélection aléatoire</div>
+    <h1>Sex Pick</h1>
+    <p>Choisis une étape, lance le timer, avance ou passe.</p>
+  </header>
+
+  <main class="app">
+    <section style="display:grid;gap:14px">
+
+      <div class="card">
+        <div class="timer-topline">
+          <span id="statusBadge" class="status-badge">Prêt</span>
+          <span id="currentCategory" class="muted">Aucune sélection</span>
+        </div>
+        <div id="timer" class="timer" aria-live="polite">2:00</div>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div class="timer-actions">
+          <button id="startTimerButton" class="btn primary small" type="button">Démarrer</button>
+          <button id="pauseTimerButton" class="btn small" type="button">Pause</button>
+          <button id="resetTimerButton" class="btn small" type="button">Reset</button>
+        </div>
+        <p id="runtimeError" class="status-error" hidden></p>
+      </div>
+
+      <div id="result" class="result-card empty">
+        <div id="resultContent"><p>Le résultat apparaîtra ici.</p></div>
+        <button id="copyButton" class="copy-btn" disabled>Copier</button>
+      </div>
+
+      <div class="feedback-actions">
+        <button id="passButton" class="btn" type="button">Passer</button>
+        <button id="nextPhaseButton" class="btn primary" type="button">Étape suivante</button>
+      </div>
+
+      <div class="choice-grid">
+        <button class="choice-card" data-category="classic" type="button">
+          <strong>Sensuel</strong>
+          <span>Douceur & frissons</span>
+        </button>
+        <button class="choice-card adv" data-category="advanced" type="button">
+          <strong>Intense</strong>
+          <span>Prendre les commandes</span>
+        </button>
+        <button class="choice-card" data-category="toy" type="button">
+          <strong>Accessoires</strong>
+          <span>Ajouter un jouet</span>
+        </button>
+        <button class="choice-card adv" data-category="position" type="button">
+          <strong>Position</strong>
+          <span>Changer de placement</span>
+        </button>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div class="card">
+        <div class="panel-title">
+          <h2>Filtres</h2>
+          <button id="resetPreferences" type="button">Réinitialiser</button>
+        </div>
+        <label class="filter-line">
+          <span>Doux uniquement</span>
+          <input id="softOnly" type="checkbox">
+        </label>
+        <label class="filter-line">
+          <span>Inclure les accessoires</span>
+          <input id="includeToys" type="checkbox" checked>
+        </label>
+        <div class="select-line">
+          <span>Position actuelle</span>
+          <select id="positionSelect"></select>
+        </div>
+        <div class="timer-control">
+          <div class="timer-control-top">
+            <span>Durée du timer</span>
+            <strong id="timerDurationLabel">2:00</strong>
+          </div>
+          <input id="timerDuration" type="range" min="30" max="300" step="30" value="120">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="panel-title">
+          <h2>Historique</h2>
+          <button id="clearHistory" type="button">Effacer</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+        <p class="history-empty" id="historyEmpty">Aucune action pour l'instant.</p>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<section id="confirmModal" class="modal" hidden>
+  <div id="modalBackdrop" class="modal-backdrop"></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h2>Changer d'étape ?</h2>
+    <p>Le timer est en cours. Passer à <strong id="modalCategory">l'étape suivante</strong> sans remettre à zéro ?</p>
+    <div class="modal-actions">
+      <button id="cancelChange" class="btn" type="button">Annuler</button>
+      <button id="confirmChange" class="btn primary" type="button">Confirmer</button>
+    </div>
+  </div>
+</section>
+
+<div id="cookieBanner" class="cookie-banner" hidden>
+  <div>
+    <strong>Préférences locales</strong>
+    <p>L'app sauvegarde les filtres, les choix et l'historique sur cet appareil.</p>
+  </div>
+  <button id="acceptCookies" type="button">OK</button>
+</div>
+
+<audio id="audio" preload="auto">
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbwp1JFi1+tOTc1rixhlMhFUudz+3n3cyilEwlGl6l2fHr4dKslVMuHmux3vLq4dOsmVUyI3C14/Lq4dOsmlYzJHW35fPs4tSsmlc0JXi55/Ts4tStmlg1Jnq75/Xs4tStmlg1Jnq85/Xs4tStmlg2Jnq85/Xs4tStmhk=" type="audio/wav">
+</audio>
+
+<script>
+(function(){
+"use strict";
+
+const POSITIONS = {
+  missionnaire:{label:"Missionnaire",access:["front","upper","hands","close","stable","lying","face"]},
+  levrette:{label:"Levrette",access:["rear","upper","hands","stable","lying"]},
+  cavaliere:{label:"Cavalière",access:["front","upper","hands","stable","seated"]},
+  cavaliere_inv:{label:"Cavalière inversée",access:["rear","hands","stable","seated"]},
+  cuillere:{label:"Cuillère",access:["rear","upper","hands","close","stable","lying"]},
+  lotus:{label:"Lotus",access:["front","upper","hands","close","seated","face"]},
+  equerre:{label:"L'équerre",access:["front","lower","hands","stable","lying"]},
+  bord_lit:{label:"Bord du lit",access:["front","upper","hands","stable","standing"]},
+  debout_face:{label:"Debout, face à face",access:["front","upper","hands","close","standing","face"]},
+  debout_dos:{label:"Debout, par derrière",access:["rear","upper","hands","close","standing"]}
+};
+
+const ACTIONS = [
+  // ── SENSUEL (classic) ──────────────────────────────────────────────
+  {phase:"classic",title:"Baisers dans le cou",actor:"Elle",target:"lui",action:"pose des baisers lents dans le creux du cou",requires:["upper","close"],intensity:"soft"},
+  {phase:"classic",title:"Baisers dans le cou",actor:"Lui",target:"elle",action:"pose des baisers lents dans le creux du cou",requires:["upper","close"],intensity:"soft"},
+  {phase:"classic",title:"Caresses dans le dos",actor:"Elle",target:"lui",action:"fait courir ses ongles doucement sur le dos",requires:["rear","upper"],intensity:"soft"},
+  {phase:"classic",title:"Caresses dans le dos",actor:"Lui",target:"elle",action:"fait courir ses ongles doucement sur le dos",requires:["rear","upper"],intensity:"soft"},
+  {phase:"classic",title:"Morsure légère",actor:"Elle",target:"lui",action:"mord doucement l'épaule ou le lobe de l'oreille",requires:["upper","close"],intensity:"soft"},
+  {phase:"classic",title:"Morsure légère",actor:"Lui",target:"elle",action:"mord doucement l'épaule ou le lobe de l'oreille",requires:["upper","close"],intensity:"soft"},
+  {phase:"classic",title:"Souffle dans l'oreille",actor:"Elle",target:"lui",action:"souffle chaud à l'oreille sans dire un mot",requires:["upper","close","face"],intensity:"soft"},
+  {phase:"classic",title:"Souffle dans l'oreille",actor:"Lui",target:"elle",action:"souffle chaud à l'oreille sans dire un mot",requires:["upper","close","face"],intensity:"soft"},
+  {phase:"classic",title:"Main dans les cheveux",actor:"Elle",target:"lui",action:"passe les doigts lentement dans ses cheveux",requires:["upper","hands"],intensity:"soft"},
+  {phase:"classic",title:"Main dans les cheveux",actor:"Lui",target:"elle",action:"passe les doigts lentement dans ses cheveux",requires:["upper","hands"],intensity:"soft"},
+  {phase:"classic",title:"Caresses des cuisses",actor:"Elle",target:"lui",action:"effleure l'intérieur des cuisses sans aller plus loin",requires:["hands","lower"],intensity:"soft"},
+  {phase:"classic",title:"Caresses des cuisses",actor:"Lui",target:"elle",action:"effleure l'intérieur des cuisses sans aller plus loin",requires:["hands","lower"],intensity:"soft"},
+  {phase:"classic",title:"Corps immobiles",actor:"Elle et lui",target:"ensemble",action:"restent parfaitement immobiles, juste collés, et respirent",requires:["close"],intensity:"soft"},
+  {phase:"classic",title:"Baisers sur le ventre",actor:"Elle",target:"lui",action:"descend une ligne de baisers sur le ventre",requires:["hands","front","lying"],intensity:"soft"},
+  {phase:"classic",title:"Baisers sur le ventre",actor:"Lui",target:"elle",action:"descend une ligne de baisers sur le ventre",requires:["hands","front","lying"],intensity:"soft"},
+  {phase:"classic",title:"Regard soutenu",actor:"Elle et lui",target:"ensemble",action:"se regardent dans les yeux sans se détourner pendant 30 secondes",requires:["face"],intensity:"soft"},
+  {phase:"classic",title:"Massage des fesses",actor:"Elle",target:"lui",action:"masse lentement les fesses avec les deux mains",requires:["rear","hands"],intensity:"soft"},
+  {phase:"classic",title:"Massage des fesses",actor:"Lui",target:"elle",action:"masse lentement les fesses avec les deux mains",requires:["rear","hands"],intensity:"soft"},
+
+  // ── INTENSE (advanced) ─────────────────────────────────────────────
+  {phase:"advanced",title:"Rythme imposé",actor:"Elle",target:"lui",action:"impose un rythme lent et constant — il ne doit pas accélérer",requires:["close","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Rythme imposé",actor:"Lui",target:"elle",action:"impose un rythme lent et constant — elle ne doit pas accélérer",requires:["close","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Pause volontaire",actor:"Elle",target:"lui",action:"s'arrête net, attend 10 secondes, reprend comme si de rien n'était",requires:["close","controlled","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Pause volontaire",actor:"Lui",target:"elle",action:"s'arrête net, attend 10 secondes, reprend comme si de rien n'était",requires:["close","controlled","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Instructions à voix basse",actor:"Elle",target:"lui",action:"murmure exactement ce qu'elle veut qu'il fasse",requires:["upper","close","face"],intensity:"advanced"},
+  {phase:"advanced",title:"Instructions à voix basse",actor:"Lui",target:"elle",action:"murmure exactement ce qu'il veut qu'elle fasse",requires:["upper","close","face"],intensity:"advanced"},
+  {phase:"advanced",title:"Mains retenues",actor:"Elle",target:"lui",action:"retient doucement ses mains au-dessus de la tête",requires:["front","upper","lying","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Mains retenues",actor:"Lui",target:"elle",action:"retient doucement ses mains au-dessus de la tête",requires:["front","upper","lying","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Yeux fermés, se laisser guider",actor:"Elle",target:"lui",action:"ferme les yeux et le laisse tout décider pendant 1 minute",requires:["hands","controlled"],intensity:"advanced"},
+  {phase:"advanced",title:"Yeux fermés, se laisser guider",actor:"Lui",target:"elle",action:"ferme les yeux et la laisse tout décider pendant 1 minute",requires:["hands","controlled"],intensity:"advanced"},
+  {phase:"advanced",title:"Changement de rôle",actor:"Elle et lui",target:"ensemble",action:"échangent les rôles actif / passif instantanément",requires:["close","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Accélération progressive",actor:"Elle et lui",target:"ensemble",action:"augmentent le rythme très progressivement, sans jamais reculer",requires:["close","stable"],intensity:"advanced"},
+  {phase:"advanced",title:"Mordre la lèvre",actor:"Elle",target:"lui",action:"attrape sa lèvre inférieure entre ses dents, très doucement",requires:["face","close"],intensity:"advanced"},
+  {phase:"advanced",title:"Mordre la lèvre",actor:"Lui",target:"elle",action:"attrape sa lèvre inférieure entre ses dents, très doucement",requires:["face","close"],intensity:"advanced"},
+  {phase:"advanced",title:"Serrer plus fort",actor:"Elle et lui",target:"ensemble",action:"se serrent nettement plus fort — hanches, dos, épaules — sans autre changement",requires:["close"],intensity:"advanced"},
+
+  // ── ACCESSOIRES (toy) ──────────────────────────────────────────────
+  {phase:"toy",title:"Glaçon",actor:"Elle",target:"lui",action:"promène un glaçon lentement sur le torse, le ventre, le dos",requires:["hands","upper"],intensity:"advanced"},
+  {phase:"toy",title:"Glaçon",actor:"Lui",target:"elle",action:"promène un glaçon lentement sur le torse, le ventre, le dos",requires:["hands","upper"],intensity:"advanced"},
+  {phase:"toy",title:"Huile de massage",actor:"Elle",target:"lui",action:"réchauffe de l'huile dans ses mains et masse les épaules, le dos, les fesses",requires:["hands","rear","upper"],intensity:"soft"},
+  {phase:"toy",title:"Huile de massage",actor:"Lui",target:"elle",action:"réchauffe de l'huile dans ses mains et masse les épaules, le dos, les fesses",requires:["hands","rear","upper"],intensity:"soft"},
+  {phase:"toy",title:"Bandeau sur les yeux",actor:"Elle",target:"lui",action:"lui bande les yeux — à lui de deviner chaque geste",requires:["hands","controlled"],intensity:"advanced"},
+  {phase:"toy",title:"Bandeau sur les yeux",actor:"Lui",target:"elle",action:"lui bande les yeux — à elle de deviner chaque geste",requires:["hands","controlled"],intensity:"advanced"},
+  {phase:"toy",title:"Vibromasseur",actor:"Elle",target:"lui",action:"introduit progressivement un vibromasseur, en commençant par le minimum",requires:["hands","stable","controlled"],intensity:"advanced"},
+  {phase:"toy",title:"Vibromasseur",actor:"Lui",target:"elle",action:"introduit progressivement un vibromasseur, en commençant par le minimum",requires:["hands","stable","controlled"],intensity:"advanced"},
+  {phase:"toy",title:"Attacher les poignets",actor:"Elle",target:"lui",action:"attache doucement ses poignets avec une écharpe — il reste immobile",requires:["front","upper","lying","stable"],intensity:"advanced"},
+  {phase:"toy",title:"Attacher les poignets",actor:"Lui",target:"elle",action:"attache doucement ses poignets avec une écharpe — elle reste immobile",requires:["front","upper","lying","stable"],intensity:"advanced"},
+  {phase:"toy",title:"Plume ou effleurage",actor:"Elle",target:"lui",action:"fait courir une plume (ou ses cheveux) sur toute la peau exposée",requires:["hands","upper"],intensity:"soft"},
+  {phase:"toy",title:"Plume ou effleurage",actor:"Lui",target:"elle",action:"fait courir une plume (ou ses cheveux) sur toute la peau exposée",requires:["hands","upper"],intensity:"soft"},
+
+  // ── POSITIONS ──────────────────────────────────────────────────────
+  {phase:"position",title:"Missionnaire",actor:"Elle et lui",target:"ensemble",action:"passent en missionnaire — corps à corps, face à face",requires:["front","stable"],positionKey:"missionnaire",intensity:"soft"},
+  {phase:"position",title:"Levrette",actor:"Elle et lui",target:"ensemble",action:"passent en levrette — elle à quatre pattes, lui derrière",requires:["rear","stable"],positionKey:"levrette",intensity:"soft"},
+  {phase:"position",title:"Cavalière",actor:"Elle",target:"lui",action:"prend les commandes en cavalière — elle au-dessus, contrôle total",requires:["front","stable"],positionKey:"cavaliere",intensity:"soft"},
+  {phase:"position",title:"Cavalière inversée",actor:"Elle",target:"lui",action:"passe en cavalière inversée — elle tourne le dos, lui profite du spectacle",requires:["rear","stable"],positionKey:"cavaliere_inv",intensity:"advanced"},
+  {phase:"position",title:"Cuillère",actor:"Elle et lui",target:"ensemble",action:"se placent en cuillère — allongés, lui derrière, corps collés",requires:["rear","stable"],positionKey:"cuillere",intensity:"soft"},
+  {phase:"position",title:"Lotus",actor:"Elle et lui",target:"ensemble",action:"passent en lotus — assis face à face, entrelacés, regard dans les yeux",requires:["front","face"],positionKey:"lotus",intensity:"soft"},
+  {phase:"position",title:"L'équerre",actor:"Elle et lui",target:"ensemble",action:"passent en équerre — elle allongée au bord du lit, lui debout ou à genoux",requires:["front","stable"],positionKey:"equerre",intensity:"advanced"},
+  {phase:"position",title:"Bord du lit",actor:"Elle et lui",target:"ensemble",action:"se positionnent au bord du lit — elle allongée, lui debout face à elle",requires:["front","standing"],positionKey:"bord_lit",intensity:"soft"},
+  {phase:"position",title:"Debout, face à face",actor:"Elle et lui",target:"ensemble",action:"se lèvent et se font face, debout — la suite se joue dans cette position",requires:["front","standing"],positionKey:"debout_face",intensity:"soft"},
+  {phase:"position",title:"Debout, par derrière",actor:"Elle et lui",target:"ensemble",action:"passent debout par derrière — elle s'appuie sur le mur ou le lit",requires:["rear","standing"],positionKey:"debout_dos",intensity:"advanced"}
+];
+
+window.SEXPICK_DATA = {positions:POSITIONS, actions:ACTIONS};
+})();
+</script>
+
+<script>
+(function(){
+"use strict";
+var STORAGE={consent:"sp.consent",history:"sp.history",passes:"sp.passes",timer:"sp.timer",pos:"sp.pos"};
+var FLOW=["classic","advanced","toy","position"];
+var state={category:null,currentPick:null,posKey:"missionnaire",isRunning:false,duration:120,remaining:120,timerId:null,history:[],passes:[],lastIds:[],pendingCat:null,copyText:""};
+
+function $(id){return document.getElementById(id);}
+function D(){return window.SEXPICK_DATA || null;}
+function txt(el,v){if(el){el.textContent=v;}}
+function lsGet(k,fb){try{var v=window.localStorage.getItem(k);return v===null||v===undefined?fb:v;}catch(e){return fb;}}
+function lsSet(k,v){try{window.localStorage.setItem(k,v);return true;}catch(e){return false;}}
+function loadJ(k,fb){try{var v=lsGet(k,null);return v?JSON.parse(v):fb;}catch(e){return fb;}}
+function saveJ(k,v){lsSet(k,JSON.stringify(v));}
+function consent(){return lsGet(STORAGE.consent,"")==="yes";}
+function saveIf(k,v){if(consent()){saveJ(k,v);}}
+function fmtTime(s){s=Math.max(0,Number(s)||0);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function catLabel(c){return{classic:"Sensuel",advanced:"Intense",toy:"Accessoires",position:"Position"}[c]||"Sélection";}
+function escapeHtml(v){return String(v).replace(/[&<>"]/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[ch];});}
+
+function currentPos(){var d=D();return d && d.positions ? d.positions[state.posKey] : null;}
+function compatible(a,p){
+  if(!p || !Array.isArray(a.requires)){return true;}
+  return a.requires.every(function(r){return p.access.indexOf(r)!==-1;});
+}
+function fmtAction(it){return it.actor==="Elle et lui"?it.action:it.actor+" "+it.action;}
+function setCopyEnabled(e){var b=$("copyButton");if(b){b.disabled=!e;}}
+
+function renderTimer(){
+  txt($("timer"),fmtTime(state.remaining));
+  var pb=$("progressBar");
+  if(pb){
+    var p=state.duration>0?(state.duration-state.remaining)/state.duration*100:0;
+    pb.style.width=Math.max(0,Math.min(100,p))+"%";
+  }
+}
+
+
+function updateTimerButtons(){
+  var start=$("startTimerButton"), pause=$("pauseTimerButton"), reset=$("resetTimerButton");
+  if(start){start.textContent=state.isRunning?"Nouveau":"Démarrer";}
+  if(pause){pause.textContent=state.isRunning?"Pause":"Reprendre"; pause.disabled=!state.category && !state.currentPick;}
+  if(reset){reset.disabled=false;}
+}
+
+function showRuntimeError(message){
+  var el=$("runtimeError");
+  if(el){el.hidden=false; el.textContent=message;}
+}
+
+function hideRuntimeError(){
+  var el=$("runtimeError");
+  if(el){el.hidden=true; el.textContent="";}
+}
+
+function ensureDefaultPick(){
+  if(!state.category){
+    state.category="classic";
+    renderCat(state.category);
+  }
+  if(!state.currentPick){
+    return pickItem(state.category);
+  }
+  return state.currentPick;
+}
+
+function startTimerOnly(){
+  hideRuntimeError();
+  if(!ensureDefaultPick()){return;}
+  if(state.remaining<=0){state.remaining=state.duration;}
+  clearInterval(state.timerId);
+  state.isRunning=true;
+  txt($("statusBadge"),"En cours");
+  state.timerId=setInterval(tick,1000);
+  renderTimer();
+  updateTimerButtons();
+}
+
+function pauseTimer(){
+  if(state.isRunning){
+    clearInterval(state.timerId);
+    state.timerId=null;
+    state.isRunning=false;
+    txt($("statusBadge"),"Pause");
+  }else{
+    startTimerOnly();
+    return;
+  }
+  updateTimerButtons();
+}
+
+function resetTimer(){
+  clearInterval(state.timerId);
+  state.timerId=null;
+  state.isRunning=false;
+  state.remaining=state.duration;
+  txt($("statusBadge"),"Prêt");
+  renderTimer();
+  updateTimerButtons();
+}
+
+function renderCat(c){
+  var pos=currentPos();
+  var label=c?catLabel(c)+" · "+(pos?pos.label:"—"):"Aucune sélection";
+  txt($("currentCategory"),label);
+  var buttons=document.querySelectorAll("[data-category]");
+  for(var i=0;i<buttons.length;i++){
+    buttons[i].classList.toggle("selected",buttons[i].dataset.category===c);
+  }
+}
+
+function renderPositionSelect(){
+  var sel=$("positionSelect"),d=D();
+  if(!sel || !d || !d.positions){return;}
+  sel.innerHTML=Object.keys(d.positions).map(function(k){return '<option value="'+escapeHtml(k)+'">'+escapeHtml(d.positions[k].label)+'</option>';}).join("");
+  if(d.positions[state.posKey]){sel.value=state.posKey;}else{state.posKey=sel.value || "missionnaire";}
+  sel.addEventListener("change",function(){
+    state.posKey=sel.value;
+    if(consent()){lsSet(STORAGE.pos,state.posKey);}
+    renderCat(state.category);
+    if(state.currentPick){renderResult();}
+  });
+}
+
+function renderResult(msg){
+  var r=$("result"),c=$("resultContent");
+  if(!r || !c){return;}
+  if(!state.currentPick){
+    r.classList.add("empty");
+    c.innerHTML="<p>"+escapeHtml(msg||"Le résultat apparaîtra ici.")+"</p>";
+    state.copyText="";setCopyEnabled(false);return;
+  }
+  var it=state.currentPick,pos=currentPos(),act=fmtAction(it);
+  state.copyText=[catLabel(it.phase)+" · "+(pos?pos.label:""),it.title,it.actor+" → "+it.target,act+"."].join("\n");
+  r.classList.remove("empty");
+  c.innerHTML='\n    <span class="result-category">'+escapeHtml(catLabel(it.phase)+" · "+(pos?pos.label:""))+'</span>\n    <h2>'+escapeHtml(it.title)+'</h2>\n    <div class="role-line">'+escapeHtml(it.actor+" → "+it.target)+'</div>\n    <p class="action-line">'+escapeHtml(act)+'.</p>';
+  setCopyEnabled(true);
+}
+
+function renderHistory(){
+  var hl=$("historyList"),he=$("historyEmpty");
+  if(!hl){return;}
+  if(!state.history.length){hl.innerHTML="";if(he){he.hidden=false;}return;}
+  if(he){he.hidden=true;}
+  hl.innerHTML=state.history.slice(0,6).map(function(it){return '\n    <article class="history-item">\n      <strong>'+escapeHtml(catLabel(it.phase))+'</strong>\n      <span>'+escapeHtml(it.title)+'</span>\n    </article>';}).join("");
+}
+
+function getItems(cat){
+  var d=D();
+  if(!d || !d.actions){renderResult("Données introuvables.");return[];}
+  var softOnly=$("softOnly") && $("softOnly").checked;
+  var inclToys=$("includeToys") ? $("includeToys").checked : true;
+  var pos=currentPos();
+  var phases=["classic","advanced","toy","position"].filter(function(p){return inclToys || p!=="toy";});
+  var cats=cat==="surprise"?phases:[cat];
+  var items=d.actions
+    .filter(function(a){return cats.indexOf(a.phase)!==-1;})
+    .filter(function(a){return inclToys || a.phase!=="toy";})
+    .filter(function(a){return compatible(a,pos);})
+    .map(function(a,i){var o={id:a.phase+"-"+i+"-"+a.title,category:a.phase};Object.keys(a).forEach(function(k){o[k]=a[k];});return o;});
+  if(softOnly){items=items.filter(function(a){return a.intensity==="soft";});}
+  var passed={};
+  state.passes.forEach(function(p){passed[p.title]=true;});
+  items=items.filter(function(a){return !passed[a.title];});
+  var nonRep=items.filter(function(a){return state.lastIds.indexOf(a.id)===-1;});
+  return nonRep.length?nonRep:items;
+}
+
+function pickItem(cat){
+  var items=getItems(cat);
+  if(!items.length){state.currentPick=null;renderResult("Aucun choix compatible.");return null;}
+  var sel=items[Math.floor(Math.random()*items.length)];
+  state.currentPick=sel;
+  if(sel.positionKey){
+    state.posKey=sel.positionKey;
+    var s=$("positionSelect");if(s){s.value=sel.positionKey;}
+    if(consent()){lsSet(STORAGE.pos,state.posKey);}
+  }
+  state.lastIds=[sel.id].concat(state.lastIds).slice(0,8);
+  state.history=[{phase:sel.phase,title:sel.title}].concat(state.history).slice(0,10);
+  saveIf(STORAGE.history,state.history);
+  renderResult();renderHistory();renderCat(cat);
+  return sel;
+}
+
+function startPhase(cat,resetTimer){
+  state.category=cat;renderCat(cat);
+  var sel=pickItem(cat);if(!sel){return;}
+  if(!state.isRunning || resetTimer){state.remaining=state.duration;}
+  if(!state.isRunning){
+    state.isRunning=true;txt($("statusBadge"),"En cours");
+    clearInterval(state.timerId);state.timerId=setInterval(tick,1000);
+  }
+  renderTimer();
+  updateTimerButtons();
+}
+
+function tick(){state.remaining=Math.max(0,state.remaining-1);renderTimer();if(state.remaining<=0){finishTimer();}}
+function finishTimer(){
+  clearInterval(state.timerId);state.timerId=null;
+  state.remaining=0;state.isRunning=false;txt($("statusBadge"),"Terminé");renderTimer();
+  updateTimerButtons();
+  var a=$("audio");if(a && a.play){a.play().catch(function(){});}
+}
+
+function passCurrent(){
+  if(!state.category){return;}
+  if(state.currentPick){state.passes=[state.currentPick].concat(state.passes).slice(0,30);saveIf(STORAGE.passes,state.passes);}
+  txt($("statusBadge"),"Passé");pickItem(state.category);
+}
+
+function nextPhase(){
+  if(!state.category){startPhase("classic",true);return;}
+  var idx=FLOW.indexOf(state.category);
+  var next=FLOW[idx+1]||FLOW[0];
+  if(state.isRunning){openModal(next);return;}
+  startPhase(next,true);
+}
+
+function openModal(cat){
+  state.pendingCat=cat;txt($("modalCategory"),catLabel(cat));
+  var m=$("confirmModal");if(m){m.hidden=false;}
+}
+function closeModal(){state.pendingCat=null;var m=$("confirmModal");if(m){m.hidden=true;}}
+function confirmChange(){
+  if(!state.pendingCat){return;}var c=state.pendingCat;closeModal();startPhase(c,false);txt($("statusBadge"),"Changé");
+}
+
+function copyResult(){
+  if(!state.copyText){return;}
+  var b=$("copyButton");
+  var done=function(ok){
+    if(!b){return;}
+    b.textContent=ok?"Copié ✓":"Erreur";
+    if(ok){b.classList.add("copied");}
+    setTimeout(function(){b.textContent="Copier";b.classList.remove("copied");},1400);
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(state.copyText).then(function(){done(true);}).catch(function(){done(false);});
+  }else{
+    try{
+      var t=document.createElement("textarea");
+      t.value=state.copyText;t.style.cssText="position:fixed;left:-9999px";
+      document.body.appendChild(t);t.focus();t.select();
+      var ok=document.execCommand("copy");t.remove();done(ok);
+    }catch(e){done(false);}
+  }
+}
+
+function initConsent(){
+  var banner=$("cookieBanner"),accept=$("acceptCookies");if(!banner || !accept){return;}
+  banner.hidden=consent();
+  accept.addEventListener("click",function(){
+    lsSet(STORAGE.consent,"yes");banner.hidden=true;
+    saveJ(STORAGE.history,state.history);saveJ(STORAGE.passes,state.passes);
+    saveJ(STORAGE.timer,state.duration);lsSet(STORAGE.pos,state.posKey);
+  });
+}
+
+function initTimerSlider(){
+  var sl=$("timerDuration"),lb=$("timerDurationLabel");if(!sl){return;}
+  var saved=Number(lsGet(STORAGE.timer,""));
+  state.duration=Number.isFinite(saved)&&saved>0?saved:120;
+  state.remaining=state.duration;sl.value=String(state.duration);
+  txt(lb,fmtTime(state.duration));renderTimer();updateTimerButtons();
+  sl.addEventListener("input",function(){
+    state.duration=Number(sl.value);state.remaining=state.duration;
+    txt(lb,fmtTime(state.duration));renderTimer();updateTimerButtons();
+    if(consent()){lsSet(STORAGE.timer,String(state.duration));}
+  });
+}
+
+function init(){
+  state.history=loadJ(STORAGE.history,[]);
+  state.passes=loadJ(STORAGE.passes,[]);
+  state.posKey=lsGet(STORAGE.pos,"missionnaire") || "missionnaire";
+  renderPositionSelect();renderHistory();renderResult();renderCat(null);txt($("statusBadge"),"Prêt");
+  initTimerSlider();initConsent();
+
+  var catButtons=document.querySelectorAll("[data-category]");
+  for(var i=0;i<catButtons.length;i++){
+    catButtons[i].addEventListener("click",function(){
+      var c=this.dataset.category;
+      if(state.isRunning){openModal(c);return;}
+      startPhase(c,true);
+    });
+  }
+
+  var el;
+  el=$("startTimerButton");if(el){el.addEventListener("click",startTimerOnly);}
+  el=$("pauseTimerButton");if(el){el.addEventListener("click",pauseTimer);}
+  el=$("resetTimerButton");if(el){el.addEventListener("click",resetTimer);}
+  el=$("passButton");if(el){el.addEventListener("click",passCurrent);}
+  el=$("nextPhaseButton");if(el){el.addEventListener("click",nextPhase);}
+  el=$("clearHistory");if(el){el.addEventListener("click",function(){state.history=[];saveIf(STORAGE.history,state.history);renderHistory();});}
+  el=$("resetPreferences");if(el){el.addEventListener("click",function(){
+    state.passes=[];state.history=[];state.lastIds=[];state.currentPick=null;state.category=null;
+    saveIf(STORAGE.passes,state.passes);saveIf(STORAGE.history,state.history);
+    renderCat(null);renderHistory();renderResult();txt($("statusBadge"),"Prêt");
+  });}
+  el=$("copyButton");if(el){el.addEventListener("click",copyResult);}
+  el=$("confirmChange");if(el){el.addEventListener("click",confirmChange);}
+  el=$("cancelChange");if(el){el.addEventListener("click",closeModal);}
+  el=$("modalBackdrop");if(el){el.addEventListener("click",closeModal);}
+
+  var he=$("historyEmpty");if(he){he.hidden=state.history.length>0;}
+  updateTimerButtons();
+}
+
+function safeInit(){
+  try{init();}
+  catch(e){showRuntimeError("Erreur JavaScript: "+(e && e.message ? e.message : e));}
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",safeInit);
+}else{
+  safeInit();
+}
+window.addEventListener("error",function(e){showRuntimeError("Erreur JavaScript: "+(e && e.message ? e.message : "inconnue"));});
+})();
+
+</script>
+</body>
+</html>
