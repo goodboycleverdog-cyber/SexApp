@@ -1,4 +1,0 @@
-Purge bootstrap css
-Change Bootstrap > Tailwinds css 
-Redevelop interface think phone first 
-purge the tailwind css 
