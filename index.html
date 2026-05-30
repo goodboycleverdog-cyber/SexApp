@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1118;
+  --paper:#f5f0eb;
+  --cream:#ede7df;
+  --rose:#c0445a;
+  --rose-pale:#f0d4d9;
+  --blush:#e8b4bc;
+  --plum:#6b2d3e;
+  --sand:#d4c4b0;
+  --muted:#8a7a72;
+  --text:#2a1f1a;
+}
+html,body{height:100%;overflow-x:hidden}
+body{
+  font-family:'Instrument Sans',sans-serif;
+  background:var(--paper);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.6;
+}
+
+/* ── LAYOUT ── */
+.page{
+  position:relative;z-index:1;
+  width:min(100%,480px);margin:0 auto;
+  padding:clamp(1.5rem,5vw,2.5rem) clamp(1rem,4vw,1.5rem) 3rem;
+  display:flex;flex-direction:column;gap:2rem;
+  flex:1;
+}
+
+/* ── HEADER ── */
+header{text-align:center;padding-top:.5rem}
+.eyebrow{
+  font-family:'Instrument Sans',sans-serif;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:.75rem;
+}
+h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2.8rem,10vw,4rem);
+  font-weight:400;line-height:.95;
+  color:var(--plum);
+  letter-spacing:-.02em;
+}
+h1 em{font-style:italic;color:var(--rose);}
+.tagline{
+  margin-top:.75rem;
+  font-size:13px;color:var(--muted);font-weight:300;letter-spacing:.04em;
+}
+
+/* ── STAGE INDICATOR ── */
+.stages{
+  display:flex;align-items:center;justify-content:center;gap:0;
+}
+.stage-dot{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  flex:1;max-width:120px;
+  opacity:.35;transition:opacity .3s;
+  cursor:default;
+}
+.stage-dot.active{opacity:1;}
+.stage-dot.done{opacity:.6;}
+.dot-ring{
+  width:32px;height:32px;border-radius:50%;
+  border:1.5px solid var(--sand);
+  background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;transition:all .3s;
+  position:relative;
+}
+.stage-dot.active .dot-ring{
+  border-color:var(--rose);
+  background:var(--rose);
+  color:#fff;
+}
+.stage-dot.done .dot-ring{
+  border-color:var(--plum);
+  background:var(--rose-pale);
+  color:var(--plum);
+}
+.dot-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.2}
+.stage-dot.active .dot-label{color:var(--rose);font-weight:500;}
+.stage-line{flex:1;height:1px;background:var(--sand);max-width:32px;margin-bottom:18px;}
+
+/* ── TIMER ── */
+.timer-block{
+  background:var(--plum);
+  border-radius:24px;
+  padding:1.75rem 1.5rem 1.5rem;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.timer-block::before{
+  content:'';position:absolute;
+  top:-40px;right:-40px;
+  width:140px;height:140px;
+  border-radius:50%;
+  background:rgba(255,255,255,.04);
+}
+.timer-block::after{
+  content:'';position:absolute;
+  bottom:-30px;left:-20px;
+  width:100px;height:100px;
+  border-radius:50%;
+  background:rgba(255,255,255,.03);
+}
+#timerDisplay{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(3.5rem,18vw,5.5rem);
+  font-weight:700;line-height:1;
+  color:#fff;letter-spacing:-.02em;
+  position:relative;z-index:1;
+}
+#timerDisplay.finished{color:var(--blush);}
+.progress-wrap{
+  margin:1rem 0 .5rem;
+  background:rgba(255,255,255,.12);
+  border-radius:99px;height:3px;overflow:hidden;
+  position:relative;z-index:1;
+}
+#progressBar{
+  height:100%;background:var(--blush);
+  border-radius:99px;
+  width:100%;
+  transition:width .9s linear;
+}
+.timer-status{
+  font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  color:rgba(255,255,255,.5);
+  position:relative;z-index:1;
+}
+.timer-controls{
+  display:flex;gap:8px;justify-content:center;margin-top:1rem;
+  position:relative;z-index:1;
+}
+.btn-ghost{
+  padding:6px 18px;border-radius:99px;
+  border:1px solid rgba(255,255,255,.25);
+  background:transparent;color:rgba(255,255,255,.7);
+  font-family:'Instrument Sans',sans-serif;
+  font-size:12px;letter-spacing:.08em;
+  cursor:pointer;transition:all .15s;
+}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.5);}
+.btn-ghost:disabled{opacity:.3;cursor:not-allowed;}
+
+/* ── RESULT CARD ── */
+.result-card{
+  background:var(--cream);
+  border:1px solid var(--sand);
+  border-radius:20px;
+  padding:1.75rem;
+  min-height:160px;
+  display:flex;flex-direction:column;justify-content:center;
+  gap:.75rem;
+  transition:all .3s;
+  position:relative;
+  overflow:hidden;
+}
+.result-card::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--rose),var(--plum));
+  opacity:0;transition:opacity .3s;
+}
+.result-card.has-result::before{opacity:1;}
+.result-empty{
+  text-align:center;color:var(--muted);
+  font-size:14px;letter-spacing:.05em;
+  font-style:italic;
+  font-family:'Playfair Display',serif;
+}
+.result-meta{
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--rose);font-weight:500;
+}
+.result-actor{
+  font-family:'Playfair Display',serif;
+  font-size:1.6rem;font-weight:700;
+  color:var(--plum);line-height:1;
+}
+.result-body{
+  font-size:1rem;color:var(--text);
+  line-height:1.55;font-weight:300;
+}
+.result-body strong{font-weight:500;color:var(--plum);}
+.result-bonus{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:99px;
+  background:var(--rose-pale);
+  border:1px solid var(--blush);
+  font-size:11px;color:var(--plum);
+  font-weight:500;letter-spacing:.06em;
+  align-self:flex-start;
+  margin-top:.25rem;
+}
+.result-type-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:99px;
+  background:var(--plum);color:#fff;
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  font-weight:500;align-self:flex-start;
+}
+/* protection badge */
+.result-protection{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--muted);
+  margin-top:.25rem;padding-top:.75rem;
+  border-top:1px solid var(--sand);
+}
+.result-protection svg{flex-shrink:0;color:var(--rose);}
+
+/* ── ACTION BUTTONS ── */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-main{
+  padding:1rem;border-radius:16px;
+  border:1.5px solid var(--sand);
+  background:var(--cream);
+  font-family:'Instrument Sans',sans-serif;
+  font-size:.8rem;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;
+  gap:6px;color:var(--text);
+  position:relative;overflow:hidden;
+}
+.btn-main::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent,rgba(192,68,90,.05));
+  opacity:0;transition:opacity .2s;
+}
+.btn-main:hover::after{opacity:1;}
+.btn-main:hover{border-color:var(--blush);transform:translateY(-1px);box-shadow:0 4px 20px rgba(192,68,90,.1);}
+.btn-main:active{transform:translateY(0);}
+.btn-main .icon{font-size:1.4rem;line-height:1;}
+.btn-main .label{font-size:10px;letter-spacing:.14em;}
+.btn-main.primary{
+  background:var(--rose);border-color:var(--rose);
+  color:#fff;grid-column:1/-1;
+  flex-direction:row;justify-content:center;
+  padding:.85rem;font-size:.85rem;
+}
+.btn-main.primary:hover{background:var(--plum);border-color:var(--plum);}
+.btn-main.secondary{
+  border-color:var(--sand);
+  background:transparent;
+}
+.btn-main:disabled{opacity:.4;pointer-events:none;}
+
+/* ── PROTECTION TOGGLE ── */
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 1rem;
+  background:var(--cream);border:1px solid var(--sand);
+  border-radius:14px;
+  font-size:12px;color:var(--muted);letter-spacing:.04em;
+}
+.settings-row strong{color:var(--text);font-weight:500;}
+.toggle{
+  position:relative;width:40px;height:22px;
+  flex-shrink:0;cursor:pointer;
+}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{
+  position:absolute;inset:0;
+  background:var(--sand);border-radius:99px;
+  transition:background .2s;
+}
+.toggle input:checked+.toggle-track{background:var(--rose);}
+.toggle-thumb{
+  position:absolute;
+  top:3px;left:3px;
+  width:16px;height:16px;
+  border-radius:50%;background:#fff;
+  transition:transform .2s;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px);}
+
+/* ── FOOTER ── */
+footer{
+  text-align:center;font-size:10px;
+  color:var(--sand);letter-spacing:.1em;
+  text-transform:uppercase;padding-bottom:1rem;
+  position:relative;z-index:1;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.result-card.has-result .result-meta,
+.result-card.has-result .result-actor,
+.result-card.has-result .result-body,
+.result-card.has-result .result-bonus,
+.result-card.has-result .result-type-badge,
+.result-card.has-result .result-protection{
+  animation:fadeUp .35s ease both;
+}
+.result-card.has-result .result-actor{animation-delay:.05s}
+.result-card.has-result .result-body{animation-delay:.1s}
+.result-card.has-result .result-bonus{animation-delay:.15s}
+.result-card.has-result .result-protection{animation-delay:.2s}
+
+/* ── AUDIO ── */
+audio{display:none}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="eyebrow">Jeu pour deux</p>
+    <h1>Pick<em>.</em></h1>
+    <p class="tagline">Laisse le hasard décider.</p>
+  </header>
+
+  <!-- Stage indicator -->
+  <div class="stages" id="stages">
+    <div class="stage-dot active" id="dot-0">
+      <div class="dot-ring">1</div>
+      <div class="dot-label">Doux</div>
+    </div>
+    <div class="stage-line"></div>
+    <div class="stage-dot" id="dot-1">
+      <div class="dot-ring">2</div>
+      <div class="dot-label">Chaud</div>
+    </div>
+    <div class="stage-line"></div>
+    <div class="stage-dot" id="dot-2">
+      <div class="dot-ring">3</div>
+      <div class="dot-label">Position</div>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-block">
+    <div id="timerDisplay">—:——</div>
+    <div class="progress-wrap"><div id="progressBar"></div></div>
+    <div class="timer-status" id="timerStatus">En attente</div>
+    <div class="timer-controls">
+      <button class="btn-ghost" id="btnPause" disabled>Pause</button>
+      <button class="btn-ghost" id="btnReset" disabled>Reset</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
+    <p class="result-empty" id="resultEmpty">Lance un pick pour commencer…</p>
+  </div>
+
+  <!-- Actions -->
+  <div class="action-row" id="actionRow">
+    <button class="btn-main secondary" id="btnPick" onclick="doPick()">
+      <span class="icon">🌸</span>
+      <span class="label">Doux</span>
+    </button>
+    <button class="btn-main secondary" id="btnHot" onclick="doHotPick()" disabled>
+      <span class="icon">🔥</span>
+      <span class="label">Chaud</span>
+    </button>
+    <button class="btn-main primary" id="btnPosition" onclick="doPosition()" disabled>
+      Passer aux positions →
+    </button>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings-row">
+    <div>
+      <strong>Protection active</strong><br>
+      Limite les positions si anal sélectionné
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="toggleProtection" checked>
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </label>
+  </div>
+
+  <footer>Pick · Pour deux · Avec amour</footer>
+</div>
+
+<audio id="audio" preload="auto">
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbwp1JFi1+tOTc1rixhlMhFUudz+3n3cyilEwlGl6l2fHr4dKslVMuHmux3vLq4dOsmVUyI3C14/Lq4dOsmlYzJHW35fPs4tSsmlc0JXi55/Ts4tStmlg1Jnq75/Xs4tStmlg1Jnq85/Xs4tStmlg2Jnq85/Xs4tStmhk=" type="audio/wav">
+</audio>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────
+var state = {
+  stage: 0,           // 0=doux, 1=chaud, 2=position
+  analLocked: false,  // si anal tiré → toujours anal
+  timerInterval: null,
+  timerTotal: 0,
+  timerLeft: 0,
+  running: false,
+};
+
+// ── DATA ───────────────────────────────────────────────────────────────
+
+// Zones corpo avec actions narratives par acteur
+var ZONES = {
+  Elle: {
+    doux: [
+      { zone:"Cou", actions:[
+        "embrasse lentement de l'oreille jusqu'à la clavicule",
+        "passe la langue en un seul tracé dans le creux du cou",
+        "souffle chaud contre la peau puis pose les lèvres",
+        "mordille la base du cou très doucement",
+        "effleure du bout des lèvres en remontant vers l'oreille"
+      ]},
+      { zone:"Oreilles", actions:[
+        "effleure le lobe du bout des lèvres",
+        "souffle lentement dans l'oreille sans toucher",
+        "mordille le lobe en tirant très légèrement",
+        "murmure quelque chose puis lèche le bord du pavillon"
+      ]},
+      { zone:"Épaules", actions:[
+        "embrasse les épaules l'une après l'autre",
+        "mord doucement le muscle entre le cou et l'épaule",
+        "masse les trapèzes avec les pouces en cercles lents",
+        "fait courir les ongles de l'épaule jusqu'au coude"
+      ]},
+      { zone:"Dos", actions:[
+        "embrasse chaque vertèbre en descendant lentement",
+        "fait courir les ongles de la nuque aux reins",
+        "masse le dos entier à pleine paume",
+        "trace des formes sur la peau — il doit deviner",
+        "laisse tomber quelques gouttes de cire tiède depuis une bougie haute"
+      ]},
+      { zone:"Torse", actions:[
+        "embrasse le sternum et descend lentement",
+        "masse les pectoraux à pleine main",
+        "fait courir un glaçon sur le torse et laisse fondre",
+        "lèche autour du téton sans le toucher"
+      ]},
+      { zone:"Cuisses", actions:[
+        "embrasse l'intérieur des cuisses en remontant doucement",
+        "effleure les cuisses du bout des doigts de bas en haut",
+        "masse les cuisses à deux mains depuis le genou vers le haut",
+        "mordille doucement l'intérieur de la cuisse"
+      ]},
+      { zone:"Fesses", actions:[
+        "masse les deux fesses à pleine main lentement",
+        "mord une fesse, d'abord doucement puis plus fort",
+        "donne une légère claque et masse l'endroit",
+        "lèche lentement chaque fesse en traçant des cercles"
+      ]},
+    ],
+    chaud: [
+      { zone:"Seins", actions:[
+        "masse les seins à pleine main en spirale de l'extérieur vers le centre",
+        "prend le téton en bouche et suce doucement puis plus fort",
+        "lèche autour du téton en cercles de plus en plus resserrés",
+        "pince doucement les tétons entre les doigts en regardant sa réaction",
+        "fait courir un glaçon sur les seins et suit la traîne froide avec la bouche"
+      ]},
+      { zone:"Vagin", actions:[
+        "embrasse les lèvres délicatement",
+        "lèche lentement en prenant tout son temps",
+        "pénètre avec un doigt en gardant la langue active",
+        "stimule le clitoris avec la langue en cercles lents",
+        "alterne langue et doigts au rythme de ses réactions"
+      ]},
+      { zone:"Clitoris", actions:[
+        "effleure du bout de la langue en cercles très lents",
+        "aspire doucement puis relâche",
+        "alterne suction légère et léchouilles en pointe",
+        "trace des huit avec la langue sans s'arrêter",
+        "utilise le vibromasseur au niveau minimum et monte graduellement"
+      ]},
+      { zone:"Anus", actions:[
+        "lèche en cercles avec la pointe de la langue",
+        "masse l'entrée doucement avec le pouce bien enduit",
+        "pénètre doucement avec un doigt lubrifié",
+        "utilise un petit plug anal en progressant très doucement"
+      ]},
+    ]
+  },
+  Lui: {
+    doux: [
+      { zone:"Cou", actions:[
+        "embrasse depuis la nuque jusqu'à la clavicule",
+        "mord légèrement la base du cou en tenant sa tête",
+        "lèche lentement de l'épaule jusqu'à l'oreille",
+        "souffle chaud dans le creux puis pose les lèvres",
+        "mordille le lobe en gardant une main dans ses cheveux"
+      ]},
+      { zone:"Oreilles", actions:[
+        "prend le lobe entre ses dents et tire très doucement",
+        "souffle lentement dans l'oreille — rien d'autre",
+        "lèche le bord du pavillon en tenant sa nuque",
+        "chuchote exactement ce qu'elle va faire avant de le faire"
+      ]},
+      { zone:"Épaules", actions:[
+        "masse les deux épaules simultanément depuis derrière",
+        "mord l'épaule fermement en le tenant contre elle",
+        "embrasse l'épaule et descend le long du bras",
+        "fait pression avec les pouces sur les omoplates"
+      ]},
+      { zone:"Dos", actions:[
+        "masse le dos entier à pleine paume en remontant",
+        "fait courir les ongles de bas en haut, aller-retour",
+        "embrasse le bas du dos et remonte vertèbre à vertèbre",
+        "trace son prénom sur le dos avec le doigt"
+      ]},
+      { zone:"Cuisses", actions:[
+        "embrasse l'intérieur des cuisses en remontant",
+        "lèche l'intérieur en alternant gauche et droite",
+        "masse les cuisses depuis le genou jusqu'en haut",
+        "mordille doucement l'intérieur de la cuisse"
+      ]},
+      { zone:"Fesses", actions:[
+        "masse les deux fesses lentement et profondément",
+        "donne une claque légère et masse après",
+        "mord une fesse en gardant les deux mains dessus",
+        "lèche les fesses en remontant vers les lombaires"
+      ]},
+    ],
+    chaud: [
+      { zone:"Pénis", actions:[
+        "embrasse la base et remonte lentement jusqu'au bout",
+        "lèche de la base jusqu'au bout en un seul tracé",
+        "prend en bouche en commençant par le bout",
+        "utilise la main et la bouche en même temps",
+        "fait tourner la langue autour du gland",
+        "tient à la main et souffle chaud avant de lécher"
+      ]},
+      { zone:"Bourse", actions:[
+        "masse délicatement à pleine main",
+        "embrasse doucement chaque côté",
+        "lèche légèrement en tenant dans la main",
+        "effleure du bout des doigts en remontant vers la base"
+      ]},
+      { zone:"Anus", actions:[
+        "lèche en cercles avec la pointe de la langue",
+        "masse l'entrée doucement avec le pouce bien enduit",
+        "pénètre doucement avec un doigt lubrifié",
+        "utilise un petit plug anal en progressant très doucement"
+      ]},
+    ]
+  }
+};
+
+// Bonus (50% de chance d'apparaître, fidèle à l'original)
+var BONUSES = [
+  "assis·e","au bord du lit","debout","à quatre pattes",
+  "les yeux bandés","mains attachées","dos au mur",
+  "en cuillère","allongé·e sur le ventre"
+];
+
+// Positions + types (fidèle à l'original avec la protection médicale)
+var POSITIONS_VAGINALES = [
+  "Missionnaire","Levrette","Elle dessus","Lotus",
+  "Bord du lit","Cuillère","Debout par derrière","Cavalière inversée",
+  "L'équerre","Contre le mur","Le Papillon","Le Sphinx"
+];
+var POSITIONS_ANALES = [
+  "Quatre pattes","Levrette profonde","Bord du lit"
+];
+
+// ── HELPERS ────────────────────────────────────────────────────────────
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function randBetween(min,max){ return Math.floor(Math.random()*(max-min)+min); }
+
+// Bonus apparaît 50% du temps (myRand(bonuses, 1, 2) = ~50%)
+function getBonus(){
+  return Math.random() < 0.5 ? rand(BONUSES) : null;
+}
+
+// ── TIMER ──────────────────────────────────────────────────────────────
+function startTimer(){
+  clearInterval(state.timerInterval);
+  state.timerTotal = randBetween(120, 240);
+  state.timerLeft = state.timerTotal;
+  state.running = true;
+  updateTimerUI();
+  document.getElementById('btnPause').disabled = false;
+  document.getElementById('btnReset').disabled = false;
+  state.timerInterval = setInterval(tickTimer, 1000);
+}
+
+function tickTimer(){
+  state.timerLeft = Math.max(0, state.timerLeft - 1);
+  updateTimerUI();
+  if(state.timerLeft <= 0){
+    clearInterval(state.timerInterval);
+    state.running = false;
+    document.getElementById('timerStatus').textContent = 'Terminé';
+    document.getElementById('timerDisplay').classList.add('finished');
+    document.getElementById('btnPause').disabled = true;
+    document.getElementById('audio').play().catch(function(){});
+  }
+}
+
+function updateTimerUI(){
+  var m = Math.floor(state.timerLeft/60);
+  var s = state.timerLeft%60;
+  document.getElementById('timerDisplay').textContent = m+':'+(s<10?'0':'')+s;
+  document.getElementById('timerDisplay').classList.remove('finished');
+  var pct = state.timerTotal > 0 ? (state.timerLeft/state.timerTotal)*100 : 0;
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('timerStatus').textContent = state.running ? 'En cours' : 'En pause';
+}
+
+document.getElementById('btnPause').addEventListener('click', function(){
+  if(state.running){
+    clearInterval(state.timerInterval);
+    state.running = false;
+    this.textContent = 'Reprendre';
+    document.getElementById('timerStatus').textContent = 'En pause';
+  } else if(state.timerLeft > 0){
+    state.running = true;
+    this.textContent = 'Pause';
+    state.timerInterval = setInterval(tickTimer, 1000);
+    document.getElementById('timerStatus').textContent = 'En cours';
+  }
+});
+
+document.getElementById('btnReset').addEventListener('click', function(){
+  clearInterval(state.timerInterval);
+  state.running = false;
+  state.timerLeft = state.timerTotal;
+  document.getElementById('btnPause').textContent = 'Pause';
+  updateTimerUI();
+});
+
+// ── STAGE MANAGEMENT ──────────────────────────────────────────────────
+function setStage(n){
+  state.stage = n;
+  for(var i=0;i<3;i++){
+    var dot = document.getElementById('dot-'+i);
+    dot.classList.remove('active','done');
+    if(i < n) dot.classList.add('done');
+    else if(i === n) dot.classList.add('active');
+  }
+  // Show/hide buttons based on stage
+  document.getElementById('btnPick').disabled = n > 0;
+  document.getElementById('btnHot').disabled = n !== 1;
+  document.getElementById('btnPosition').disabled = n !== 1;
+  if(n === 2){
+    document.getElementById('btnPosition').textContent = '→ Encore une position';
+    document.getElementById('btnPosition').disabled = false;
+    document.getElementById('btnHot').disabled = true;
+  }
+}
+
+// ── RENDER RESULT ──────────────────────────────────────────────────────
+function showResult(html){
+  var card = document.getElementById('resultCard');
+  document.getElementById('resultEmpty').style.display = 'none';
+  card.innerHTML = html;
+  card.classList.add('has-result');
+}
+
+// ── PICK DOUX ──────────────────────────────────────────────────────────
+function doPick(){
+  startTimer();
+  setStage(0);
+
+  var actor = rand(['Elle','Lui']);
+  var zones = ZONES[actor].doux;
+  var zoneObj = rand(zones);
+  var action = rand(zoneObj.actions);
+  var bonus = getBonus();
+
+  var html =
+    '<div class="result-meta">Préliminaires · Doux</div>'+
+    '<div class="result-actor">'+actor+'</div>'+
+    '<div class="result-body">'+action+' — <strong>'+zoneObj.zone+'</strong></div>'+
+    (bonus ? '<div class="result-bonus">📍 '+bonus+'</div>' : '');
+
+  showResult(html);
+
+  // Unlock hot + position
+  document.getElementById('btnHot').disabled = false;
+  document.getElementById('btnPosition').disabled = false;
+  setStage(0);
+}
+
+// ── HOT PICK ───────────────────────────────────────────────────────────
+function doHotPick(){
+  startTimer();
+  setStage(1);
+
+  var actor = rand(['Elle','Lui']);
+  var zones = ZONES[actor].chaud;
+  var zoneObj = rand(zones);
+  var action = rand(zoneObj.actions);
+  var bonus = getBonus();
+
+  var html =
+    '<div class="result-meta">Préliminaires · Chaud 🔥</div>'+
+    '<div class="result-actor">'+actor+'</div>'+
+    '<div class="result-body">'+action+' — <strong>'+zoneObj.zone+'</strong></div>'+
+    (bonus ? '<div class="result-bonus">📍 '+bonus+'</div>' : '');
+
+  showResult(html);
+}
+
+// ── POSITION ───────────────────────────────────────────────────────────
+function doPosition(){
+  startTimer();
+  setStage(2);
+
+  var protection = document.getElementById('toggleProtection').checked;
+
+  // Type pick: 1 chance sur 5 d'être anal (fidèle à l'original: 1 Anal sur 5 entrées)
+  var typeRoll = Math.random();
+  var isAnal;
+
+  if(state.analLocked){
+    isAnal = true;
+  } else {
+    isAnal = typeRoll < 0.20; // 20% = 1/5 comme l'original
+    if(isAnal && protection){ state.analLocked = true; }
+  }
+
+  var position, type;
+  if(isAnal){
+    type = 'Anal';
+    position = rand(POSITIONS_ANALES);
+  } else {
+    type = 'Vaginal';
+    position = rand(POSITIONS_VAGINALES);
+  }
+
+  var protectionNote = (isAnal && protection)
+    ? '<div class="result-protection"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Protection active — les prochaines positions resteront anales</div>'
+    : '';
+
+  var html =
+    '<div class="result-type-badge">'+type+'</div>'+
+    '<div class="result-actor" style="margin-top:.5rem">'+position+'</div>'+
+    (getBonus() ? '<div class="result-bonus">📍 '+rand(BONUSES)+'</div>' : '')+
+    protectionNote;
+
+  showResult(html);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+setStage(0);
+</script>
+</body>
+</html>
