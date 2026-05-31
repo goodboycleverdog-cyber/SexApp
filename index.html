@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & VARS ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --paper:#f5f0eb; --cream:#ede7df; --rose:#c0445a;
+  --rose-pale:#f0d4d9; --blush:#e8b4bc; --plum:#6b2d3e;
+  --sand:#d4c4b0; --muted:#8a7a72; --text:#2a1f1a;
+  --ease-out-back: cubic-bezier(.34,1.56,.64,1);
+}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:'Instrument Sans',sans-serif;background:var(--paper);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");opacity:.7;}
+
+/* ── LAYOUT ── */
+.page{position:relative;z-index:1;width:min(100%,480px);margin:0 auto;padding:clamp(1.5rem,5vw,2.5rem) clamp(1rem,4vw,1.5rem) 3rem;display:flex;flex-direction:column;gap:1.75rem;flex:1;}
+
+/* ── HEADER ── */
+header{text-align:center;padding-top:.5rem}
+.eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,10vw,4rem);font-weight:400;line-height:.95;color:var(--plum);letter-spacing:-.02em;}
+h1 em{font-style:italic;color:var(--rose)}
+.tagline{margin-top:.6rem;font-size:13px;color:var(--muted);font-weight:300;letter-spacing:.04em}
+
+/* ── STAGE INDICATOR ── */
+.stages{display:flex;align-items:center;justify-content:center;}
+.stage-dot{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;max-width:110px;opacity:.3;transition:opacity .3s;}
+.stage-dot.active{opacity:1}.stage-dot.done{opacity:.55}
+.dot-ring{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--sand);background:transparent;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .3s;}
+.stage-dot.active .dot-ring{border-color:var(--rose);background:var(--rose);color:#fff}
+.stage-dot.done .dot-ring{border-color:var(--plum);background:var(--rose-pale);color:var(--plum)}
+.dot-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.stage-dot.active .dot-label{color:var(--rose);font-weight:500}
+.stage-line{flex:1;height:1px;background:var(--sand);max-width:28px;margin-bottom:15px}
+
+/* ── TIMER ── */
+.timer-block{background:var(--plum);border-radius:24px;padding:1.6rem 1.4rem 1.3rem;text-align:center;position:relative;overflow:hidden;}
+.timer-block::before{content:'';position:absolute;top:-40px;right:-40px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.04)}
+.timer-block::after{content:'';position:absolute;bottom:-25px;left:-15px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.03)}
+#timerDisplay{font-family:'Playfair Display',serif;font-size:clamp(3.2rem,16vw,5rem);font-weight:700;line-height:1;color:#fff;letter-spacing:-.02em;position:relative;z-index:1;transition:color .3s;}
+#timerDisplay.fin{color:var(--blush)}
+.progress-wrap{margin:.9rem 0 .45rem;background:rgba(255,255,255,.12);border-radius:99px;height:3px;overflow:hidden;position:relative;z-index:1;}
+#progressBar{height:100%;background:var(--blush);border-radius:99px;width:0%;transition:width .9s linear}
+.timer-status{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);position:relative;z-index:1;}
+.timer-controls{display:flex;gap:8px;justify-content:center;margin-top:.9rem;position:relative;z-index:1;}
+.btn-ghost{padding:5px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.22);background:transparent;color:rgba(255,255,255,.65);font-family:'Instrument Sans',sans-serif;font-size:11px;letter-spacing:.07em;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.45)}
+.btn-ghost:disabled{opacity:.25;cursor:not-allowed}
+
+/* ── RESULT CARD ── */
+.result-card{background:var(--cream);border:1px solid var(--sand);border-radius:20px;padding:1.6rem;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:.65rem;position:relative;overflow:hidden;transition:box-shadow .3s;}
+.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--rose),var(--plum));opacity:0;transition:opacity .3s;}
+.result-card.has-result::before{opacity:1}
+.result-card.has-result{box-shadow:0 4px 24px rgba(107,45,62,.08)}
+.result-empty{text-align:center;color:var(--muted);font-size:14px;font-style:italic;font-family:'Playfair Display',serif;letter-spacing:.03em;}
+.result-meta{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--rose);font-weight:500}
+.result-actor{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:700;color:var(--plum);line-height:1;}
+.result-body{font-size:.97rem;color:var(--text);line-height:1.55;font-weight:300}
+.result-body strong{font-weight:500;color:var(--plum)}
+.result-bonus{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;background:var(--rose-pale);border:1px solid var(--blush);font-size:11px;color:var(--plum);font-weight:500;letter-spacing:.05em;align-self:flex-start;}
+.result-type-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;background:var(--plum);color:#fff;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;align-self:flex-start;}
+.result-protection{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:.2rem;padding-top:.65rem;border-top:1px solid var(--sand);}
+.result-protection svg{flex-shrink:0;color:var(--rose)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.result-card.has-result > *{animation:fadeUp .3s ease both}
+.result-card.has-result > *:nth-child(2){animation-delay:.05s}
+.result-card.has-result > *:nth-child(3){animation-delay:.1s}
+.result-card.has-result > *:nth-child(4){animation-delay:.15s}
+.result-card.has-result > *:nth-child(5){animation-delay:.2s}
+/* FS open button */
+.btn-fs-open{position:absolute;top:.85rem;right:.85rem;width:28px;height:28px;border-radius:50%;border:1px solid var(--sand);background:var(--paper);color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;opacity:0;pointer-events:none;}
+.result-card.has-result .btn-fs-open{opacity:1;pointer-events:auto;}
+.btn-fs-open:hover{border-color:var(--rose);color:var(--rose);background:var(--rose-pale);}
+
+/* ── ACTION BUTTONS ── */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-main{padding:.95rem 1rem;border-radius:16px;border:1.5px solid var(--sand);background:var(--cream);font-family:'Instrument Sans',sans-serif;font-size:.78rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text);position:relative;overflow:hidden;}
+.btn-main:hover:not(:disabled){border-color:var(--blush);transform:translateY(-1px);box-shadow:0 4px 18px rgba(192,68,90,.1)}
+.btn-main:active:not(:disabled){transform:translateY(0)}
+.btn-main .icon{font-size:1.3rem;line-height:1}.btn-main .lbl{font-size:10px;letter-spacing:.13em}
+.btn-main.primary{background:var(--rose);border-color:var(--rose);color:#fff;grid-column:1/-1;flex-direction:row;justify-content:center;padding:.8rem;font-size:.82rem;gap:8px;}
+.btn-main.primary:hover:not(:disabled){background:var(--plum);border-color:var(--plum)}
+.btn-main.danger{background:transparent;border-color:var(--sand);color:var(--muted);grid-column:1/-1;flex-direction:row;justify-content:center;padding:.7rem;font-size:.78rem;gap:6px;}
+.btn-main.danger:hover:not(:disabled){border-color:var(--rose);color:var(--rose);background:var(--rose-pale)}
+.btn-main:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+/* Smooth hide/show without layout jump */
+.btn-main.hidden{visibility:hidden;pointer-events:none;opacity:0;}
+
+/* ── SETTINGS ── */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:var(--cream);border:1px solid var(--sand);border-radius:14px;font-size:12px;color:var(--muted);letter-spacing:.03em;gap:1rem;}
+.settings-row strong{color:var(--text);font-weight:500;display:block;margin-bottom:2px}
+.toggle{position:relative;width:38px;height:21px;flex-shrink:0;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--sand);border-radius:99px;transition:background .2s}
+.toggle input:checked + .toggle-track{background:var(--rose)}
+.toggle-thumb{position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none;}
+.toggle input:checked ~ .toggle-thumb{transform:translateX(17px)}
+
+/* ── ACCESSORIES PANEL ── */
+.acc-block{background:var(--cream);border:1px solid var(--sand);border-radius:18px;overflow:hidden;}
+.acc-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;cursor:pointer;user-select:none;gap:.75rem;}
+.acc-header-left{display:flex;align-items:center;gap:.6rem}
+.acc-header-left strong{font-size:.85rem;font-weight:500;color:var(--text)}
+.acc-count{font-size:10px;padding:2px 8px;border-radius:99px;background:var(--rose-pale);color:var(--plum);font-weight:600;letter-spacing:.04em;}
+.acc-chevron{font-size:11px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+.acc-block.open .acc-chevron{transform:rotate(180deg)}
+.acc-list{display:none;padding:0 .9rem .9rem;grid-template-columns:1fr 1fr;gap:7px;}
+.acc-list.visible{display:grid}
+.acc-item{display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;border-radius:10px;border:1.5px solid var(--sand);background:var(--paper);cursor:pointer;transition:all .15s;}
+.acc-item:hover{border-color:var(--blush);background:var(--rose-pale)}
+.acc-item.active{border-color:var(--rose);background:var(--rose-pale)}
+.acc-item.active .acc-check{background:var(--rose);border-color:var(--rose)}
+.acc-item.active .acc-check::after{display:block}
+.acc-emoji{font-size:1.1rem;line-height:1;flex-shrink:0}
+.acc-name{font-size:.78rem;font-weight:500;color:var(--text);letter-spacing:.02em;line-height:1.2}
+.acc-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--sand);background:#fff;flex-shrink:0;margin-left:auto;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.acc-check::after{content:'';display:none;width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);}
+
+/* ── ONBOARDING SCREEN ── */
+.onboard-overlay{position:fixed;inset:0;z-index:300;background:var(--paper);display:flex;flex-direction:column;overflow-y:auto;}
+.onboard-overlay.hidden{display:none}
+.onboard-inner{width:min(100%,480px);margin:0 auto;padding:clamp(2rem,6vw,3rem) clamp(1rem,4vw,1.5rem) 3rem;display:flex;flex-direction:column;gap:1.75rem;min-height:100%;}
+.onboard-hero{text-align:center;padding-top:.5rem}
+.onboard-hero .eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.onboard-hero h2{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,7vw,2.6rem);font-weight:700;color:var(--plum);line-height:1.1;}
+.onboard-hero h2 em{font-style:italic;color:var(--rose)}
+.onboard-hero p{margin-top:.6rem;font-size:13px;color:var(--muted);font-weight:300;line-height:1.6;}
+.onboard-section{display:flex;flex-direction:column;gap:.75rem}
+.onboard-section-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;}
+.onboard-acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.onboard-acc-item{display:flex;align-items:center;gap:.65rem;padding:.65rem .8rem;border-radius:12px;border:1.5px solid var(--sand);background:var(--cream);cursor:pointer;transition:all .15s;user-select:none;}
+.onboard-acc-item:hover{border-color:var(--blush);background:var(--rose-pale)}
+.onboard-acc-item.active{border-color:var(--rose);background:var(--rose-pale)}
+.onboard-acc-item.active .acc-check{background:var(--rose);border-color:var(--rose)}
+.onboard-acc-item.active .acc-check::after{display:block}
+.onboard-btn-row{display:flex;flex-direction:column;gap:10px;margin-top:.5rem}
+.btn-onboard-start{padding:1rem;border-radius:16px;background:var(--rose);border:none;color:#fff;font-family:'Instrument Sans',sans-serif;font-size:.88rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.btn-onboard-start:hover{background:var(--plum)}
+.btn-onboard-start:active{transform:scale(.98)}
+.onboard-skip{background:transparent;border:1px solid var(--sand);border-radius:16px;padding:.75rem;color:var(--muted);font-family:'Instrument Sans',sans-serif;font-size:.8rem;cursor:pointer;letter-spacing:.06em;transition:all .15s;}
+.onboard-skip:hover{border-color:var(--muted);color:var(--text)}
+.onboard-protect-row{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:var(--cream);border:1px solid var(--sand);border-radius:14px;gap:1rem;}
+.onboard-protect-row strong{font-size:.85rem;font-weight:500;color:var(--text);display:block;margin-bottom:2px}
+.onboard-protect-row span{font-size:11px;color:var(--muted)}
+
+/* ── MODAL ── */
+.modal-backdrop{display:none;position:fixed;inset:0;z-index:100;background:rgba(26,17,24,.55);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;}
+.modal-backdrop.open{display:flex}
+.modal-sheet{background:var(--paper);border-radius:24px 24px 0 0;width:min(100%,480px);padding:1.5rem 1.5rem 2.5rem;border-top:1px solid var(--sand);animation:slideUp .28s cubic-bezier(.32,1,.48,1) both;}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:36px;height:4px;background:var(--sand);border-radius:99px;margin:0 auto 1.25rem}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--plum);margin-bottom:.4rem;font-weight:700;}
+.modal-desc{font-size:13px;color:var(--muted);margin-bottom:1.4rem;line-height:1.5}
+.modal-options{display:flex;flex-direction:column;gap:10px}
+.modal-opt{padding:1rem 1.1rem;border-radius:14px;border:1.5px solid var(--sand);background:var(--cream);font-family:'Instrument Sans',sans-serif;cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:.85rem;}
+.modal-opt:hover{border-color:var(--rose);background:var(--rose-pale)}
+.modal-opt .opt-icon{font-size:1.4rem;line-height:1;flex-shrink:0}
+.modal-opt .opt-title{font-size:.88rem;font-weight:500;color:var(--text);display:block}
+.modal-opt .opt-sub{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+.modal-cancel{margin-top:.75rem;width:100%;padding:.75rem;border-radius:99px;border:1px solid var(--sand);background:transparent;font-family:'Instrument Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.05em;}
+.modal-cancel:hover{border-color:var(--muted);color:var(--text)}
+
+/* ── FULLSCREEN OVERLAY ── */
+.fs-overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--plum);flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.75rem;text-align:center;}
+.fs-overlay.open{display:flex;animation:fsFadeIn .22s ease both;}
+@keyframes fsFadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.fs-overlay::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:.5;}
+.fs-overlay > *{position:relative;z-index:1;}
+.fs-exit{position:absolute;top:1.25rem;right:1.25rem;z-index:2;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.fs-exit:hover{background:rgba(255,255,255,.18);color:#fff;}
+.fs-stage-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:1.75rem;}
+.fs-actor{font-family:'Playfair Display',serif;font-size:clamp(1rem,4.5vw,1.3rem);color:var(--blush);font-weight:400;font-style:italic;margin-bottom:.5rem;letter-spacing:.02em;}
+.fs-action{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,5.5vw,2.2rem);color:#fff;font-weight:700;line-height:1.2;letter-spacing:-.01em;margin-bottom:.5rem;}
+.fs-zone{font-size:clamp(.95rem,3.5vw,1.15rem);color:rgba(255,255,255,.55);font-weight:300;letter-spacing:.04em;margin-bottom:1.75rem;}
+.fs-bonus{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.65);margin-bottom:1.75rem;letter-spacing:.05em;}
+.fs-divider{width:40px;height:1px;background:rgba(255,255,255,.15);margin:0 auto 1.75rem;}
+.fs-timer{font-family:'Playfair Display',serif;font-size:clamp(4.5rem,20vw,7rem);font-weight:700;line-height:1;color:#fff;letter-spacing:-.03em;margin-bottom:.5rem;transition:color .3s;}
+.fs-timer.fin{color:var(--blush);}
+.fs-progress-wrap{width:min(240px,65vw);height:3px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden;margin:0 auto 1.75rem;}
+.fs-progress-bar{height:100%;background:var(--blush);border-radius:99px;width:100%;transition:width .9s linear;}
+.fs-controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.fs-btn{padding:8px 22px;border-radius:99px;border:1px solid rgba(255,255,255,.22);background:transparent;color:rgba(255,255,255,.65);font-family:'Instrument Sans',sans-serif;font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .15s;}
+.fs-btn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.45);}
+.fs-btn:disabled{opacity:.25;cursor:not-allowed;}
+.fs-btn.accent{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);}
+.fs-btn.accent:hover{background:rgba(255,255,255,.22);}
+
+footer{text-align:center;font-size:10px;color:var(--sand);letter-spacing:.1em;text-transform:uppercase;padding-bottom:1rem;position:relative;z-index:1;}
+</style>
+</head>
+<body>
+
+<!-- ══ ONBOARDING SCREEN ════════════════════════════════════════════ -->
+<div class="onboard-overlay" id="onboardOverlay">
+  <div class="onboard-inner">
+    <div class="onboard-hero">
+      <p class="eyebrow">Jeu pour deux</p>
+      <h2>On <em>s'installe.</em></h2>
+      <p>Cochez ce que vous avez sous la main —<br>seules les actions possibles vous seront proposées.</p>
+    </div>
+
+    <div class="onboard-section">
+      <p class="onboard-section-title">Accessoires disponibles</p>
+      <div class="onboard-acc-grid" id="onboardAccGrid"></div>
+    </div>
+
+    <div class="onboard-section">
+      <p class="onboard-section-title">Sécurité</p>
+      <div class="onboard-protect-row">
+        <div>
+          <strong>Protection médicale</strong>
+          <span>Si anal tiré, les positions suivantes restent anales</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="onboardToggleProtection" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="onboard-btn-row">
+      <button class="btn-onboard-start" id="btnOnboardStart">C'est parti 🌸</button>
+      <button class="onboard-skip" id="btnOnboardSkip">Passer la configuration</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══════════════════════════════════════════════════════ -->
+<div class="page">
+  <header>
+    <p class="eyebrow">Jeu pour deux</p>
+    <h1>Pick<em>.</em></h1>
+    <p class="tagline">Laisse le hasard décider.</p>
+  </header>
+
+  <div class="stages">
+    <div class="stage-dot active" id="dot-0"><div class="dot-ring">1</div><div class="dot-label">Doux</div></div>
+    <div class="stage-line"></div>
+    <div class="stage-dot" id="dot-1"><div class="dot-ring">2</div><div class="dot-label">Chaud</div></div>
+    <div class="stage-line"></div>
+    <div class="stage-dot" id="dot-2"><div class="dot-ring">3</div><div class="dot-label">Position</div></div>
+  </div>
+
+  <div class="timer-block">
+    <div id="timerDisplay">—:——</div>
+    <div class="progress-wrap"><div id="progressBar" style="width:0%"></div></div>
+    <div class="timer-status" id="timerStatus">En attente</div>
+    <div class="timer-controls">
+      <button class="btn-ghost" id="btnPause" disabled>Pause</button>
+      <button class="btn-ghost" id="btnReset" disabled>Reset</button>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <p class="result-empty">Lance un pick pour commencer…</p>
+    <button class="btn-fs-open" id="btnFsOpen" title="Plein écran">⛶</button>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-main" id="btnReroll" disabled><span class="icon">🎲</span><span class="lbl">Autre</span></button>
+    <button class="btn-main" id="btnNext" disabled><span class="icon">→</span><span class="lbl">Étape suivante</span></button>
+    <button class="btn-main primary" id="btnStart">Commencer 🌸</button>
+    <button class="btn-main danger hidden" id="btnNewGame">↺ Nouvelle partie</button>
+  </div>
+
+  <div class="settings-row">
+    <div><strong>Protection médicale</strong>Si anal tiré, les positions suivantes restent anales</div>
+    <label class="toggle">
+      <input type="checkbox" id="toggleProtection" checked>
+      <div class="toggle-track"></div><div class="toggle-thumb"></div>
+    </label>
+  </div>
+
+  <div class="acc-block" id="accBlock">
+    <div class="acc-header" id="accHeader">
+      <div class="acc-header-left"><span>🎒</span><strong>Accessoires</strong><span class="acc-count" id="accCount">0 / 0</span></div>
+      <span class="acc-chevron">▼</span>
+    </div>
+    <div class="acc-list" id="accList"></div>
+  </div>
+
+  <footer>Pick · Pour deux · Avec amour</footer>
+</div>
+
+<!-- ══ FULLSCREEN ════════════════════════════════════════════════════ -->
+<div class="fs-overlay" id="fsOverlay">
+  <button class="fs-exit" id="fsExit">✕</button>
+  <div class="fs-stage-badge" id="fsStageBadge">—</div>
+  <div class="fs-actor" id="fsActor"></div>
+  <div class="fs-action" id="fsAction"></div>
+  <div class="fs-zone" id="fsZone"></div>
+  <div class="fs-bonus" id="fsBonus" style="display:none"></div>
+  <div class="fs-divider"></div>
+  <div class="fs-timer" id="fsTimer">—:——</div>
+  <div class="fs-progress-wrap"><div class="fs-progress-bar" id="fsProgressBar" style="width:0%"></div></div>
+  <div class="fs-controls">
+    <button class="fs-btn" id="fsBtnPause" disabled>Pause</button>
+    <button class="fs-btn accent" id="fsBtnReroll">🎲 Autre</button>
+    <button class="fs-btn" id="fsBtnNext">→ Étape suivante</button>
+  </div>
+</div>
+
+<!-- ══ MODAL ═════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modalNext">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Passer à l'étape suivante ?</div>
+    <div class="modal-desc" id="modalDesc"></div>
+    <div class="modal-options" id="modalOptions"></div>
+    <button class="modal-cancel" id="modalCancel">Annuler</button>
+  </div>
+</div>
+
+<!-- ══ BELL ══════════════════════════════════════════════════════════ -->
+<script>
+function playBell() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function ding(time, freq, gain) {
+      var osc = ctx.createOscillator(), env = ctx.createGain(), comp = ctx.createDynamicsCompressor();
+      var osc2 = ctx.createOscillator(), env2 = ctx.createGain();
+      osc.connect(env); env.connect(comp); comp.connect(ctx.destination);
+      osc2.connect(env2); env2.connect(comp);
+      osc.type = osc2.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+      osc2.frequency.setValueAtTime(freq * 2.756, time);
+      env.gain.setValueAtTime(gain, time);
+      env.gain.exponentialRampToValueAtTime(0.0001, time + 2.2);
+      env2.gain.setValueAtTime(gain * 0.3, time);
+      env2.gain.exponentialRampToValueAtTime(0.0001, time + 1.8);
+      osc.start(time); osc.stop(time + 2.2);
+      osc2.start(time); osc2.stop(time + 1.8);
+    }
+    var t = ctx.currentTime;
+    ding(t, 880, 0.5); ding(t + 0.55, 1046, 0.4); ding(t + 1.0, 1318, 0.35);
+  } catch(e) {}
+}
+
+function vibrate(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
+}
+</script>
+
+<!-- ══ APP ═══════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── DATA ─────────────────────────────────────────────────────────── */
+
+var ZONES = {
+  LuiSurElle: {
+    doux: [
+      { zone:"son cou", actor:"Lui", target:"elle", actions:[
+        "embrasse lentement de l'oreille jusqu'à la clavicule",
+        "passe la langue en un seul tracé dans le creux du cou",
+        "souffle chaud contre sa peau puis pose les lèvres",
+        "mordille la base du cou très doucement",
+        "effleure du bout des lèvres en remontant vers l'oreille",
+        "souffle froid sur son cou avec un glaçon dans la bouche, puis pose les lèvres chaudes [glaçon]",
+        "verse quelques gouttes d'huile chauffante sur son cou et les étale du bout des doigts [huile]",
+      ]},
+      { zone:"ses oreilles", actor:"Lui", target:"elle", actions:[
+        "effleure le lobe du bout des lèvres",
+        "souffle lentement dans son oreille sans toucher",
+        "mordille le lobe en tirant très légèrement",
+        "murmure quelque chose puis lèche le bord du pavillon",
+        "lui bande les yeux et souffle dans son oreille sans prévenir [bandeau]",
+      ]},
+      { zone:"ses épaules", actor:"Lui", target:"elle", actions:[
+        "embrasse ses épaules l'une après l'autre",
+        "mord doucement le muscle entre son cou et son épaule",
+        "masse ses trapèzes avec les pouces en cercles lents",
+        "fait courir les ongles de son épaule jusqu'à son coude",
+        "masse ses épaules avec de l'huile chaude, les deux pouces dans les trapèzes [huile]",
+        "effleure ses épaules avec une plume ou le bout de ses doigts [fouet]",
+      ]},
+      { zone:"son dos", actor:"Lui", target:"elle", actions:[
+        "embrasse chaque vertèbre en descendant lentement",
+        "fait courir ses ongles de sa nuque à ses reins",
+        "masse son dos entier à pleine paume",
+        "trace des formes sur sa peau — elle doit deviner",
+        "verse de l'huile chaude dans ses mains et masse tout le dos sans s'arrêter [huile]",
+        "laisse tomber quelques gouttes de cire tiède de haut — de la nuque aux lombaires [cire]",
+        "fait courir une plume le long de sa colonne vertébrale, très lentement [fouet]",
+        "lui attache les poignets dans le dos et masse tout le dos sans qu'elle puisse bouger [attaches]",
+      ]},
+      { zone:"ses cuisses", actor:"Lui", target:"elle", actions:[
+        "embrasse l'intérieur de ses cuisses en remontant doucement",
+        "effleure ses cuisses du bout des doigts de bas en haut",
+        "masse ses cuisses à deux mains depuis le genou vers le haut",
+        "mordille doucement l'intérieur de sa cuisse",
+        "fait glisser un glaçon sur l'intérieur de ses cuisses en remontant [glaçon]",
+        "masse ses cuisses avec de l'huile chaude, remonte très lentement [huile]",
+        "effleure l'intérieur de ses cuisses avec une plume [fouet]",
+      ]},
+      { zone:"ses fesses", actor:"Lui", target:"elle", actions:[
+        "masse ses fesses à pleine main lentement",
+        "mord une fesse, d'abord doucement puis plus fort",
+        "lui donne une légère claque et masse l'endroit",
+        "lèche lentement ses fesses en traçant des cercles",
+        "lui donne une série de claques légères au rythme de sa respiration [fouet]",
+        "masse ses fesses avec de l'huile puis s'attarde sur le bas du dos [huile]",
+      ]},
+    ],
+    chaud: [
+      { zone:"ses seins", actor:"Lui", target:"elle", actions:[
+        "masse ses seins à pleine main en spirale de l'extérieur vers le centre",
+        "prend son téton en bouche et suce doucement puis plus fort",
+        "lèche autour de son téton en cercles de plus en plus resserrés",
+        "pince doucement ses tétons entre ses doigts en la regardant dans les yeux",
+        "fait courir un glaçon sur ses seins et suit la traîne froide avec la bouche [glaçon]",
+        "pose une pince de chaque côté, commence à tension minimale — attend sa réaction [attaches]",
+        "verse de l'huile chauffante sur ses seins et les masse lentement [huile]",
+        "lui bande les yeux et effleure ses tétons alternativement avec la plume et la bouche [bandeau][fouet]",
+      ]},
+      { zone:"son vagin", actor:"Lui", target:"elle", actions:[
+        "embrasse ses lèvres délicatement",
+        "lèche lentement en prenant tout son temps",
+        "pénètre avec un doigt en gardant la langue active",
+        "stimule son clitoris avec la langue en cercles lents",
+        "alterne langue et doigts au rythme de ses réactions",
+        "utilise le vibromasseur à intensité minimale sur ses lèvres, monte graduellement [vibromasseur]",
+        "utilise un gode en le bougant doucement pendant que la langue reste active [sextoy]",
+        "lui attache les chevilles écartées avant de descendre [attaches]",
+      ]},
+      { zone:"son clitoris", actor:"Lui", target:"elle", actions:[
+        "effleure du bout de la langue en cercles très lents",
+        "aspire doucement puis relâche",
+        "alterne suction légère et pointe de langue",
+        "trace des huit avec la langue sans s'arrêter",
+        "pose le vibromasseur au niveau minimum, monte d'un cran à chaque fois qu'elle le demande [vibromasseur]",
+        "utilise le stimulateur à succion au niveau le plus bas, attend sa réaction [vibromasseur]",
+        "lui bande les yeux et ne commence que quand elle dit le mot [bandeau]",
+      ]},
+      { zone:"son anus", actor:"Lui", target:"elle", actions:[
+        "lèche en cercles avec la pointe de la langue",
+        "masse l'entrée doucement avec le pouce bien enduit",
+        "pénètre doucement avec un doigt lubrifié",
+        "insère un petit plug très lentement, s'arrête si elle demande [plug]",
+        "insère le plug et reprend les préliminaires ailleurs pendant qu'il reste en place [plug]",
+      ]},
+    ]
+  },
+  ElleSurLui: {
+    doux: [
+      { zone:"son cou", actor:"Elle", target:"lui", actions:[
+        "embrasse depuis sa nuque jusqu'à sa clavicule",
+        "mord légèrement la base de son cou en tenant sa tête",
+        "lèche lentement de son épaule jusqu'à son oreille",
+        "souffle chaud dans le creux puis pose les lèvres",
+        "mordille le lobe en gardant une main dans ses cheveux",
+        "souffle froid sur son cou avec un glaçon dans la bouche puis pose les lèvres [glaçon]",
+      ]},
+      { zone:"ses oreilles", actor:"Elle", target:"lui", actions:[
+        "prend son lobe entre ses dents et tire très doucement",
+        "souffle lentement dans son oreille — rien d'autre",
+        "lèche le bord du pavillon en tenant sa nuque",
+        "lui chuchote exactement ce qu'elle va faire avant de le faire",
+        "lui bande les yeux puis souffle dans son oreille sans prévenir [bandeau]",
+      ]},
+      { zone:"ses épaules", actor:"Elle", target:"lui", actions:[
+        "masse ses deux épaules simultanément depuis derrière",
+        "mord son épaule fermement en le tenant contre elle",
+        "embrasse son épaule et descend le long de son bras",
+        "appuie avec les pouces sur ses omoplates en cercles",
+        "masse ses épaules avec de l'huile chaude, lentement [huile]",
+        "effleure ses épaules avec une plume ou le bout des ongles [fouet]",
+      ]},
+      { zone:"son dos", actor:"Elle", target:"lui", actions:[
+        "masse son dos entier à pleine paume en remontant",
+        "fait courir ses ongles de bas en haut, aller-retour",
+        "embrasse son bas du dos et remonte vertèbre à vertèbre",
+        "trace son prénom sur son dos avec le doigt",
+        "verse de l'huile chaude et masse longuement tout son dos [huile]",
+        "laisse tomber des gouttes de cire tiède de la nuque aux lombaires [cire]",
+        "fait courir une plume le long de sa colonne, du bas vers le haut [fouet]",
+      ]},
+      { zone:"ses cuisses", actor:"Elle", target:"lui", actions:[
+        "embrasse l'intérieur de ses cuisses en remontant",
+        "lèche l'intérieur en alternant gauche et droite",
+        "masse ses cuisses depuis le genou jusqu'en haut",
+        "mordille doucement l'intérieur de sa cuisse",
+        "fait glisser un glaçon sur l'intérieur de ses cuisses [glaçon]",
+        "masse ses cuisses avec de l'huile chaude [huile]",
+        "effleure l'intérieur de ses cuisses avec une plume [fouet]",
+      ]},
+      { zone:"ses fesses", actor:"Elle", target:"lui", actions:[
+        "masse ses deux fesses lentement et profondément",
+        "lui donne une claque légère et masse après",
+        "mord une fesse en gardant les deux mains dessus",
+        "lèche ses fesses en remontant vers ses lombaires",
+        "utilise la lanière ou la plume sur ses fesses, crescendo très progressif [fouet]",
+        "masse ses fesses avec de l'huile puis descend vers le bas du dos [huile]",
+      ]},
+      { zone:"son torse", actor:"Elle", target:"lui", actions:[
+        "embrasse son sternum et descend lentement",
+        "masse ses pectoraux à pleine main",
+        "lèche autour de son téton sans le toucher directement",
+        "fait courir un glaçon sur son torse, suit la trace froide avec la bouche [glaçon]",
+        "verse de l'huile chauffante sur son torse et l'étale à pleine paume [huile]",
+        "lui bande les yeux et effleure son torse avec la plume sans qu'il sache où [bandeau][fouet]",
+        "lui attache les poignets au-dessus de la tête et lèche son torse lentement [attaches]",
+      ]},
+    ],
+    chaud: [
+      { zone:"son pénis", actor:"Elle", target:"lui", actions:[
+        "embrasse la base et remonte lentement jusqu'au bout",
+        "lèche de la base jusqu'au bout en un seul tracé",
+        "prend en bouche en commençant par le bout",
+        "utilise la main et la bouche en même temps",
+        "fait tourner la langue autour du gland",
+        "tient à la main et souffle chaud avant de lécher",
+        "lui enfile l'anneau vibrant avant de commencer — il sent la vibration à chaque mouvement [vibromasseur]",
+        "lui attache les poignets avant de prendre son temps [attaches]",
+        "lui bande les yeux et commence sans prévenir [bandeau]",
+      ]},
+      { zone:"sa bourse", actor:"Elle", target:"lui", actions:[
+        "masse délicatement à pleine main",
+        "embrasse doucement chaque côté",
+        "lèche légèrement en tenant dans la main",
+        "effleure du bout des doigts en remontant vers la base",
+        "effleure avec la plume pendant que la main reste posée [fouet]",
+      ]},
+      { zone:"son anus", actor:"Elle", target:"lui", actions:[
+        "lèche en cercles avec la pointe de la langue",
+        "masse l'entrée doucement avec le pouce bien enduit",
+        "pénètre doucement avec un doigt lubrifié",
+        "insère un petit plug très lentement, s'arrête si il demande [plug]",
+        "insère le plug et reprend les préliminaires ailleurs pendant qu'il reste en place [plug]",
+      ]},
+    ]
+  }
+};
+
+// Bonus — sans accessoires (ceux-là sont dans les actions directement)
+var BONUSES = [
+  "assis·e","au bord du lit","debout","à quatre pattes",
+  "dos au mur","en cuillère","allongé·e sur le ventre",
+  "un genou à terre","à califourchon"
+];
+
+var POSITIONS_VAGINALES = [
+  { nom:"Missionnaire",        desc:"Elle allongée sur le dos, lui entre ses jambes — corps à corps, face à face, le plus intime." },
+  { nom:"Levrette",            desc:"Elle à quatre pattes, lui derrière — pénétration profonde, mains libres sur tout son corps." },
+  { nom:"Elle dessus",         desc:"Elle à genoux sur lui, rythme et profondeur entièrement à elle — elle contrôle tout." },
+  { nom:"Lotus",               desc:"Assis face à face, elle enroule les jambes autour de lui — corps soudés, regard impossible à esquiver." },
+  { nom:"Bord du lit",         desc:"Elle allongée en travers, fesses au bord, lui debout — angle plongeant, il règle la profondeur." },
+  { nom:"Cuillère",            desc:"Allongés sur le côté, lui dans son dos — corps entièrement collés, gestes lents et intimes." },
+  { nom:"Debout par derrière", desc:"Elle appuyée contre le mur ou un meuble, lui dans son dos debout — mains libres partout." },
+  { nom:"Cavalière inversée",  desc:"Elle dos à lui, à genoux sur lui — il profite du spectacle, elle contrôle sans croiser son regard." },
+  { nom:"L'équerre",           desc:"Elle allongée, jambes relevées contre son torse — angle inédit, profondeur maximale." },
+  { nom:"Contre le mur",       desc:"Debout face à face contre le mur — pénétration verticale, rien pour s'accrocher sauf lui." },
+  { nom:"Le Papillon",         desc:"Elle au bord du lit, jambes soulevées par lui debout — angle plongeant, frottement ventral intense." },
+  { nom:"Le Sphinx",           desc:"Elle à plat ventre, oreiller sous les hanches, lui par-dessus — angle rasant, pression douce et profonde." },
+];
+
+var POSITIONS_ANALES = [
+  { nom:"Quatre pattes",       desc:"Elle à quatre pattes, lui derrière — position classique, accès optimal, rythme à lui." },
+  { nom:"Levrette profonde",   desc:"Elle à plat ventre, jambes serrées, lui par-dessus — jambes serrées qui augmentent la pression." },
+  { nom:"Bord du lit",         desc:"Elle allongée en travers, lui debout — angle contrôlé, il peut aller aussi doucement qu'il veut." },
+];
+
+/* ── ACCESSORIES ─────────────────────────────────────────────────── */
+
+var ACCESSORIES = [
+  { id:'glaçon',        emoji:'🧊', label:'Glaçon',           keyword:'glaçon' },
+  { id:'cire',          emoji:'🕯️', label:'Bougie / Cire',    keyword:'cire' },
+  { id:'huile',         emoji:'🫧', label:'Huile de massage', keyword:'huile' },
+  { id:'vibromasseur',  emoji:'📳', label:'Vibromasseur',     keyword:'vibromasseur' },
+  { id:'plug',          emoji:'🔌', label:'Plug anal',        keyword:'plug' },
+  { id:'sextoy',        emoji:'💜', label:'Sextoy / Gode',    keyword:'sextoy' },
+  { id:'bandeau',       emoji:'🩹', label:'Bandeau yeux',     keyword:'bandeau' },
+  { id:'attaches',      emoji:'🎀', label:'Liens / Attaches', keyword:'attaches' },
+  { id:'fouet',         emoji:'🪶', label:'Fouet / Plume',    keyword:'fouet' },
+];
+
+var activeAcc = {};
+ACCESSORIES.forEach(function(a){ activeAcc[a.id] = true; });
+
+/* ── STATE ───────────────────────────────────────────────────────── */
+
+var state = {
+  stage: null,
+  analLocked: false,
+  timer: { interval:null, total:0, left:0, running:false }
+};
+
+var fsData = { actor:'', action:'', zone:'', bonus:null, stageBadge:'' };
+
+/* ── HELPERS ─────────────────────────────────────────────────────── */
+
+function rand(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function randBetween(min, max){ return Math.floor(Math.random() * (max - min) + min); }
+function getBonus(){ return Math.random() < 0.5 ? rand(BONUSES) : null; }
+function el(id){ return document.getElementById(id); }
+function vibrate(pattern){ try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){} }
+
+/* ── ACCESSORIES MODULE ──────────────────────────────────────────── */
+
+var Accessories = {
+  actionAllowed: function(actionStr) {
+    // Extract all [keyword] tags from the action string
+    var tags = actionStr.match(/\[([^\]]+)\]/g);
+    if (!tags) return true;
+    for (var i = 0; i < tags.length; i++) {
+      var keyword = tags[i].slice(1, -1); // strip [ ]
+      // Find the accessory with this keyword
+      for (var j = 0; j < ACCESSORIES.length; j++) {
+        if (ACCESSORIES[j].keyword === keyword && !activeAcc[ACCESSORIES[j].id]) {
+          return false; // required accessory not available
+        }
+      }
+    }
+    return true;
+  },
+  // Strip the [keyword] tag from display text
+  cleanAction: function(actionStr) {
+    return actionStr.replace(/\s*\[[^\]]+\]/g, '');
+  },
+  filterActions: function(actions) {
+    return actions.filter(function(a){ return Accessories.actionAllowed(a); });
+  },
+  renderInto: function(listEl, countEl) {
+    var total = ACCESSORIES.length;
+    var active = ACCESSORIES.filter(function(a){ return activeAcc[a.id]; }).length;
+    if (countEl) countEl.textContent = active + ' / ' + total;
+    listEl.innerHTML = ACCESSORIES.map(function(acc) {
+      var on = activeAcc[acc.id];
+      return '<div class="acc-item' + (on ? ' active' : '') + '" data-id="' + acc.id + '">' +
+        '<span class="acc-emoji">' + acc.emoji + '</span>' +
+        '<span class="acc-name">' + acc.label + '</span>' +
+        '<span class="acc-check"></span></div>';
+    }).join('');
+    listEl.querySelectorAll('.acc-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        activeAcc[this.dataset.id] = !activeAcc[this.dataset.id];
+        vibrate(30);
+        Accessories.renderInto(el('accList'), el('accCount'));
+        Accessories.renderInto(el('onboardAccGrid'), null);
+      });
+    });
+  },
+  init: function() {
+    var collapsed = true;
+    el('accHeader').addEventListener('click', function() {
+      collapsed = !collapsed;
+      el('accList').classList.toggle('visible', !collapsed);
+      el('accBlock').classList.toggle('open', !collapsed);
+    });
+    Accessories.renderInto(el('accList'), el('accCount'));
+  }
+};
+
+/* ── TIMER ───────────────────────────────────────────────────────── */
+
+var Timer = {
+  start: function(duration) {
+    clearInterval(state.timer.interval);
+    state.timer.total = duration !== undefined ? duration : randBetween(60, 120);
+    state.timer.left  = state.timer.total;
+    state.timer.running = true;
+    el('btnPause').disabled = false;
+    el('btnReset').disabled = false;
+    el('btnPause').textContent = 'Pause';
+    el('timerDisplay').classList.remove('fin');
+    state.timer.interval = setInterval(Timer.tick, 1000);
+    Timer.render();
+  },
+  tick: function() {
+    state.timer.left = Math.max(0, state.timer.left - 1);
+    Timer.render();
+    if (state.timer.left <= 0) Timer.finish();
+  },
+  finish: function() {
+    clearInterval(state.timer.interval);
+    state.timer.running = false;
+    el('timerDisplay').classList.add('fin');
+    el('timerStatus').textContent = 'Terminé ✓';
+    el('btnPause').disabled = true;
+    playBell();
+    vibrate([200, 100, 200, 100, 400]); // pattern distinctif
+  },
+  pause: function() {
+    if (state.timer.running) {
+      clearInterval(state.timer.interval);
+      state.timer.running = false;
+      el('btnPause').textContent = 'Reprendre';
+      el('timerStatus').textContent = 'En pause';
+    } else if (state.timer.left > 0) {
+      state.timer.running = true;
+      state.timer.interval = setInterval(Timer.tick, 1000);
+      el('btnPause').textContent = 'Pause';
+      el('timerStatus').textContent = 'En cours';
+    }
+  },
+  reset: function() {
+    clearInterval(state.timer.interval);
+    state.timer.running = false;
+    state.timer.left = state.timer.total;
+    el('btnPause').textContent = 'Pause';
+    Timer.render();
+  },
+  render: function() {
+    var m = Math.floor(state.timer.left / 60);
+    var s = state.timer.left % 60;
+    el('timerDisplay').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    var pct = state.timer.total > 0 ? (state.timer.left / state.timer.total) * 100 : 0;
+    el('progressBar').style.width = pct + '%';
+    if (state.timer.running) el('timerStatus').textContent = 'En cours';
+    if (Fullscreen.isOpen()) Fullscreen.syncTimer();
+  }
+};
+
+/* ── CARD ────────────────────────────────────────────────────────── */
+
+var Card = {
+  show: function(html) {
+    var card = el('resultCard');
+    card.classList.remove('has-result');
+    void card.offsetWidth;
+    card.innerHTML = html + '<button class="btn-fs-open" id="btnFsOpen" title="Plein écran">⛶</button>';
+    card.classList.add('has-result');
+    el('btnFsOpen').addEventListener('click', function(){ Fullscreen.open(); });
+    if (Fullscreen.isOpen()) Fullscreen.syncContent();
+  }
+};
+
+/* ── STAGES ──────────────────────────────────────────────────────── */
+
+var STAGE_ORDER = ['doux', 'chaud', 'position'];
+
+var Stages = {
+  set: function(stage) {
+    state.stage = stage;
+    var idx = STAGE_ORDER.indexOf(stage);
+    for (var i = 0; i < 3; i++) {
+      var dot = el('dot-' + i);
+      dot.classList.remove('active', 'done');
+      if      (i < idx)  dot.classList.add('done');
+      else if (i === idx) dot.classList.add('active');
+    }
+    Buttons.update();
+  }
+};
+
+/* ── BUTTONS ─────────────────────────────────────────────────────── */
+
+var Buttons = {
+  update: function() {
+    var s = state.stage;
+    var started = s !== null;
+    // Start: hide once game begins (use visibility to avoid layout jump)
+    el('btnStart').classList.toggle('hidden', started);
+    // New game: show once game begins
+    el('btnNewGame').classList.toggle('hidden', !started);
+    // Reroll
+    el('btnReroll').disabled = !started;
+    // Next
+    if (s === 'position') {
+      el('btnNext').style.visibility = 'hidden';
+      el('btnNext').style.pointerEvents = 'none';
+    } else {
+      el('btnNext').style.visibility = '';
+      el('btnNext').style.pointerEvents = '';
+      el('btnNext').disabled = !started;
+    }
+    // Reroll label
+    el('btnReroll').querySelector('.lbl').textContent = s === 'position' ? 'Encore' : 'Autre';
+  }
+};
+
+/* ── PICKS ───────────────────────────────────────────────────────── */
+
+var Picks = {
+  _pickZone: function(mode) {
+    var perspective = rand(['LuiSurElle', 'ElleSurLui']);
+    var zones = ZONES[perspective][mode].slice().sort(function(){ return Math.random() - .5; });
+    for (var i = 0; i < zones.length; i++) {
+      var filtered = Accessories.filterActions(zones[i].actions);
+      if (filtered.length) return { zone: zones[i], actions: filtered };
+    }
+    return null;
+  },
+
+  doux: function() {
+    var result = Picks._pickZone('doux');
+    if (!result) { Card.show('<div class="result-meta">Doux</div><div class="result-body">Aucune action disponible — activez des accessoires.</div>'); return; }
+    var zone   = result.zone;
+    var action = Accessories.cleanAction(rand(result.actions));
+    var bonus  = getBonus();
+    fsData = { actor: zone.actor + ' → ' + zone.target, action: action, zone: zone.zone, bonus: bonus, stageBadge: 'Préliminaires · Doux' };
+    Card.show(
+      '<div class="result-meta">Préliminaires · Doux</div>' +
+      '<div class="result-actor">' + zone.actor + ' → ' + zone.target + '</div>' +
+      '<div class="result-body">' + zone.actor + ' ' + action + ' — <strong>' + zone.zone + '</strong></div>' +
+      (bonus ? '<div class="result-bonus">📍 ' + bonus + '</div>' : '')
+    );
+    Stages.set('doux');
+    Timer.start(randBetween(30, 60));
+    vibrate(40);
+  },
+
+  chaud: function() {
+    var result = Picks._pickZone('chaud');
+    if (!result) { Card.show('<div class="result-meta">Chaud 🔥</div><div class="result-body">Aucune action disponible — activez des accessoires.</div>'); return; }
+    var zone   = result.zone;
+    var action = Accessories.cleanAction(rand(result.actions));
+    var bonus  = getBonus();
+    fsData = { actor: zone.actor + ' → ' + zone.target, action: action, zone: zone.zone, bonus: bonus, stageBadge: 'Préliminaires · Chaud 🔥' };
+    Card.show(
+      '<div class="result-meta">Préliminaires · Chaud 🔥</div>' +
+      '<div class="result-actor">' + zone.actor + ' → ' + zone.target + '</div>' +
+      '<div class="result-body">' + zone.actor + ' ' + action + ' — <strong>' + zone.zone + '</strong></div>' +
+      (bonus ? '<div class="result-bonus">📍 ' + bonus + '</div>' : '')
+    );
+    Stages.set('chaud');
+    Timer.start(randBetween(45, 90));
+    vibrate(40);
+  },
+
+  position: function() {
+    var protection = el('toggleProtection').checked;
+    var isAnal = state.analLocked ? true : Math.random() < 0.20;
+    if (isAnal && protection && !state.analLocked) state.analLocked = true;
+    var type  = isAnal ? 'Anal' : 'Vaginal';
+    var pos   = isAnal ? rand(POSITIONS_ANALES) : rand(POSITIONS_VAGINALES);
+    var bonus = getBonus();
+    var protNote = (isAnal && protection)
+      ? '<div class="result-protection"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Protection active — les prochaines positions restent anales</div>'
+      : '';
+    fsData = { actor: type, action: pos.nom, zone: pos.desc, bonus: bonus, stageBadge: 'Position · ' + type };
+    Card.show(
+      '<div class="result-type-badge">' + type + '</div>' +
+      '<div class="result-actor" style="margin-top:.45rem">' + pos.nom + '</div>' +
+      '<div class="result-body" style="margin-top:.1rem">' + pos.desc + '</div>' +
+      (bonus ? '<div class="result-bonus">📍 ' + bonus + '</div>' : '') +
+      protNote
+    );
+    Stages.set('position');
+    Timer.start(randBetween(60, 120));
+    vibrate([50, 30, 50]);
+  },
+
+  reroll: function() {
+    if      (state.stage === 'doux')     Picks.doux();
+    else if (state.stage === 'chaud')    Picks.chaud();
+    else if (state.stage === 'position') Picks.position();
+  }
+};
+
+/* ── NEW GAME ────────────────────────────────────────────────────── */
+
+function newGame() {
+  clearInterval(state.timer.interval);
+  state.stage     = null;
+  state.analLocked = false;
+  state.timer     = { interval:null, total:0, left:0, running:false };
+  // Reset timer UI
+  el('timerDisplay').textContent = '—:——';
+  el('timerDisplay').classList.remove('fin');
+  el('progressBar').style.width = '0%';
+  el('timerStatus').textContent = 'En attente';
+  el('btnPause').disabled = true;
+  el('btnReset').disabled = true;
+  el('btnPause').textContent = 'Pause';
+  // Reset card
+  el('resultCard').classList.remove('has-result');
+  el('resultCard').innerHTML = '<p class="result-empty">Lance un pick pour commencer…</p><button class="btn-fs-open" id="btnFsOpen" title="Plein écran">⛶</button>';
+  el('btnFsOpen').addEventListener('click', function(){ Fullscreen.open(); });
+  // Reset dots
+  for (var i = 0; i < 3; i++) {
+    var dot = el('dot-' + i);
+    dot.classList.remove('active', 'done');
+    if (i === 0) dot.classList.add('active');
+  }
+  Buttons.update();
+}
+
+/* ── MODAL ───────────────────────────────────────────────────────── */
+
+var Modal = {
+  open: function() {
+    var s = state.stage, opts = [];
+    if (s === 'doux' || s === null) {
+      opts.push({ icon:'🔥', title:'Passer au Chaud',   sub:'Préliminaires intenses', action: Picks.chaud });
+      opts.push({ icon:'🎯', title:'Aller en Position', sub:'Choisir une position',   action: Picks.position });
+    } else if (s === 'chaud') {
+      opts.push({ icon:'🎯', title:'Aller en Position', sub:'Choisir une position',   action: Picks.position });
+      opts.push({ icon:'🌸', title:'Revenir au Doux',   sub:'Ralentir un peu',        action: Picks.doux });
+    }
+    if (!opts.length) return;
+    el('modalDesc').textContent = s === 'doux'
+      ? 'Préliminaires doux en cours. Envie de monter en intensité ?'
+      : 'Préliminaires chauds en cours. Prêt·es pour la suite ?';
+    el('modalOptions').innerHTML = opts.map(function(o, idx) {
+      return '<button class="modal-opt" data-idx="' + idx + '">' +
+        '<span class="opt-icon">' + o.icon + '</span>' +
+        '<span><span class="opt-title">' + o.title + '</span><span class="opt-sub">' + o.sub + '</span></span>' +
+        '</button>';
+    }).join('');
+    el('modalOptions').querySelectorAll('.modal-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        vibrate(30);
+        Modal.close();
+        opts[parseInt(this.dataset.idx, 10)].action();
+      });
+    });
+    el('modalNext').classList.add('open');
+  },
+  close: function() { el('modalNext').classList.remove('open'); }
+};
+
+/* ── FULLSCREEN ──────────────────────────────────────────────────── */
+
+var Fullscreen = {
+  _touchStartY: 0,
+  open: function() {
+    Fullscreen.syncContent();
+    Fullscreen.syncTimer();
+    el('fsOverlay').classList.add('open');
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(function(){});
+    }
+  },
+  close: function() {
+    el('fsOverlay').classList.remove('open');
+    if (document.exitFullscreen && document.fullscreenElement) {
+      document.exitFullscreen().catch(function(){});
+    }
+  },
+  isOpen: function() { return el('fsOverlay').classList.contains('open'); },
+  syncContent: function() {
+    el('fsStageBadge').textContent = fsData.stageBadge || '—';
+    el('fsActor').textContent      = fsData.actor  || '';
+    el('fsAction').textContent     = fsData.action || '';
+    el('fsZone').textContent       = fsData.zone   || '';
+    var bonusEl = el('fsBonus');
+    if (fsData.bonus) { bonusEl.textContent = '📍 ' + fsData.bonus; bonusEl.style.display = 'inline-flex'; }
+    else { bonusEl.style.display = 'none'; }
+  },
+  syncTimer: function() {
+    var m = Math.floor(state.timer.left / 60);
+    var s = state.timer.left % 60;
+    el('fsTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    el('fsTimer').classList.toggle('fin', state.timer.left === 0);
+    var pct = state.timer.total > 0 ? (state.timer.left / state.timer.total) * 100 : 0;
+    el('fsProgressBar').style.width = pct + '%';
+    el('fsBtnPause').disabled = state.timer.left === 0;
+    el('fsBtnPause').textContent = state.timer.running ? 'Pause' : 'Reprendre';
+  },
+  init: function() {
+    el('btnFsOpen').addEventListener('click', function(){ Fullscreen.open(); });
+    el('fsExit').addEventListener('click',    function(){ Fullscreen.close(); });
+    el('fsBtnPause').addEventListener('click', function(){ Timer.pause(); });
+    el('fsBtnReroll').addEventListener('click', function(){ Picks.reroll(); });
+    el('fsBtnNext').addEventListener('click',   function(){ Modal.open(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') Fullscreen.close(); });
+    // Swipe down to close on mobile
+    var overlay = el('fsOverlay');
+    overlay.addEventListener('touchstart', function(e){ Fullscreen._touchStartY = e.touches[0].clientY; }, { passive:true });
+    overlay.addEventListener('touchend', function(e) {
+      if (e.changedTouches[0].clientY - Fullscreen._touchStartY > 60) Fullscreen.close();
+    }, { passive:true });
+  }
+};
+
+/* ── ONBOARDING ──────────────────────────────────────────────────── */
+
+var Onboard = {
+  init: function() {
+    // Build accessory grid
+    var grid = el('onboardAccGrid');
+    grid.innerHTML = ACCESSORIES.map(function(acc) {
+      return '<div class="onboard-acc-item acc-item active" data-id="' + acc.id + '">' +
+        '<span class="acc-emoji">' + acc.emoji + '</span>' +
+        '<span class="acc-name">' + acc.label + '</span>' +
+        '<span class="acc-check"></span></div>';
+    }).join('');
+    grid.querySelectorAll('.onboard-acc-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        var id = this.dataset.id;
+        activeAcc[id] = !activeAcc[id];
+        this.classList.toggle('active', activeAcc[id]);
+        vibrate(30);
+        // Keep main panel in sync
+        Accessories.renderInto(el('accList'), el('accCount'));
+      });
+    });
+
+    // Sync protection toggle with main
+    el('onboardToggleProtection').addEventListener('change', function() {
+      el('toggleProtection').checked = this.checked;
+    });
+
+    el('btnOnboardStart').addEventListener('click', function() {
+      vibrate(50);
+      Onboard.finish();
+      Picks.doux();
+    });
+    el('btnOnboardSkip').addEventListener('click', function() {
+      Onboard.finish();
+    });
+  },
+  finish: function() {
+    el('onboardOverlay').classList.add('hidden');
+  }
+};
+
+/* ── EVENT LISTENERS ────────────────────────────────────────────── */
+
+el('btnStart').addEventListener('click',   function(){ Picks.doux(); });
+el('btnReroll').addEventListener('click',  function(){ vibrate(30); Picks.reroll(); });
+el('btnNext').addEventListener('click',    function(){ Modal.open(); });
+el('btnPause').addEventListener('click',   function(){ Timer.pause(); });
+el('btnReset').addEventListener('click',   function(){ Timer.reset(); });
+el('btnNewGame').addEventListener('click', function(){ newGame(); });
+el('modalCancel').addEventListener('click', function(){ Modal.close(); });
+el('modalNext').addEventListener('click', function(e){ if(e.target === this) Modal.close(); });
+// Sync protection toggle main↔onboard
+el('toggleProtection').addEventListener('change', function(){
+  el('onboardToggleProtection').checked = this.checked;
+});
+
+/* ── INIT ────────────────────────────────────────────────────────── */
+
+Buttons.update();
+Accessories.init();
+Fullscreen.init();
+Onboard.init();
+</script>
+</body>
+</html>
